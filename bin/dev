@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+fastapi dev ./backend/main.py

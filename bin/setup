@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+echo "Set up complete; Run bin/dev to start local development environment"
