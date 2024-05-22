@@ -41,6 +41,8 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432:5432
 
   mongo:
     image: mongo:latest
