@@ -1,8 +1,8 @@
 services:
   python-app:
     build:
-      context: ../..
-      dockerfile: .devcontainer/backend/Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     volumes:
       - ../..:/workspaces:cached
     # Overrides default command so things don't shut down after the process ends.
@@ -18,6 +18,7 @@ services:
     depends_on:
       - redis
       - postgres
+      - mongo
 
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -25,34 +26,10 @@ services:
     networks:
       - default
     volumes:
-      - redis-data:/data
+      - redis-data:/data/redis
     ports:
       - 6379:6379
       - 8001:8001
-
-  mongo:
-    image: mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-    networks:
-      - default
-    volumes:
-      - mongo-data:/data
-
-  mongo-express:
-    image: mongo-express
-    restart: unless-stopped
-    ports:
-      - 8082:8081
-    networks:
-      - default
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
-      ME_CONFIG_BASICAUTH: false
 
   postgres:
     image: postgres:16
@@ -64,8 +41,37 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432:5432
+
+  mongo:
+    image: mongo:latest
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      - mongodb-data:/data/mongo
+    ports:
+      - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: NFHM
+
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
 
 volumes:
   postgres-data:
   redis-data:
-  mongo-data:
+  mongodb-data:
