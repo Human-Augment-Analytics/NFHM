@@ -23,6 +23,7 @@ services:
     depends_on:
     - redis
     - postgres
+    - mongo
 
   redis:
     image: redis:7
@@ -30,7 +31,7 @@ services:
     networks:
     - default
     volumes:
-    - redis-data:/data
+    - redis-data:/data/redis
 
   postgres:
     image: postgres:16
@@ -43,6 +44,23 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
+  mongo:
+    image: mongo:latest
+    restart: unless-stopped
+    networks:
+    - default
+    volumes:
+      - mongodb-data:/data/mongo
+    ports:
+    - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME:
+      MONGO_INITDB_ROOT_PASSWORD:
+      MONGO_INITDB_DATABASE: local
+
+
+
 volumes:
   postgres-data:
   redis-data:
+  mongodb-data:
