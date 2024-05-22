@@ -1,0 +1,1 @@
+from .mongo_output import dump_to_mongo  # noqa
