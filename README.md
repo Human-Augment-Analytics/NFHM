@@ -12,7 +12,7 @@
 ## Installation
 
 To run locally:
-- Open as a devcontainer using VSCode (or any other IDE; However, inly tested to work on VSCode) or the devcontainer CLI
+- Open as a devcontainer using VSCode (or any other IDE; However, only tested and confirmed to work with VSCode) or the devcontainer CLI
 - (SUBJECT TO CHANGE): run bin/dev
 
 ## Usage
