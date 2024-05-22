@@ -16,9 +16,9 @@ services:
     ports:
       - 45679:45679
     depends_on:
-    - redis
-    - postgres
-    - mongo
+      - redis
+      - postgres
+      - mongo
 
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -48,11 +48,11 @@ services:
     image: mongo:latest
     restart: unless-stopped
     networks:
-    - default
+      - default
     volumes:
       - mongodb-data:/data/mongo
     ports:
-    - 27018:27017
+      - 27018:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
