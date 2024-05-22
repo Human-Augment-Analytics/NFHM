@@ -1,8 +1,8 @@
 {
-  "name": "NFHM",
+  "name": "ingestor",
   "dockerComposeFile": "compose.yml",
   "service": "python-app",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/workspaces/ingestor",
   // Features to add to the dev container. More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
@@ -13,16 +13,12 @@
     "DB_HOST": "postgres"
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [
-    8000,
-    5432,
-    6379
-  ],
+  "forwardPorts": [8000, 5432, 6379, 8082],
   // Configure tool-specific properties.
   // "customizations": {},
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root",
   // Use 'postCreateCommand' to run commands after the container is created.
-  "remoteUser": "vscode",
-  "postCreateCommand": "bin/setup"
+  "remoteUser": "vscode"
+  // "postCreateCommand": "bin/setup"
 }

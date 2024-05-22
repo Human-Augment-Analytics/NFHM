@@ -1,8 +1,8 @@
 services:
   python-app:
     build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+      context: ../..
+      dockerfile: .devcontainer/backend/Dockerfile
     volumes:
       - ../..:/workspaces:cached
     # Overrides default command so things don't shut down after the process ends.
@@ -36,12 +36,18 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - default
+    volumes:
+      - mongo-data:/data
 
   mongo-express:
     image: mongo-express
     restart: unless-stopped
     ports:
-      - 8081:8081
+      - 8082:8081
+    networks:
+      - default
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
@@ -62,3 +68,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  mongo-data:
