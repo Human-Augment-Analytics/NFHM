@@ -7,14 +7,16 @@ from redis.asyncio import Redis
 
 
 class RedisQueue(BaseQueue):
-    def __init__(self, host: str, port: str = '6379', db: int = 0, password: str | None = None) -> None:
+    def __init__(self, host: str, port: str = '6379', database: int = 0, username: str | None = None, password: str | None = None) -> None:
         self.conn = Redis(
             host=host,
             port=port,
-            db=db,
+            db=database,
+            username=username,
             password=password,
             decode_responses=True
         )
+        super().__init__()
 
     async def healthcheck(self):
         await self.conn.ping()
@@ -33,3 +35,6 @@ class RedisQueue(BaseQueue):
 
     async def delete(self, wip_queue: str, url: str):
         await self.conn.lrem(wip_queue, 1, url)
+
+    async def close(self):
+        await self.conn.aclose()

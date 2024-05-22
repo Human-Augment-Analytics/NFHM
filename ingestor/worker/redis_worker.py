@@ -17,14 +17,14 @@ class RedisWorker(Worker):
         self.output_kwargs = output_kwargs
         self.timeout = timeout
 
-    async def work(self, source: str):
+    async def work(self, source_queue: str):
         # The WIP queue is always going to be <source>_wip
         # Temp queue for holding in case the worker process dies before its done with its work
-        wip_queue = f'{source}_wip'
+        wip_queue = f'{source_queue}_wip'
         # Worker task, loop forever to do its just until the worker has been stopped
         while True:
             try:
-                queued_data = await self.queue.dequeue(source, timeout=self.timeout, wip_queue=wip_queue)
+                queued_data = await self.queue.dequeue(source_queue, timeout=self.timeout, wip_queue=wip_queue)
                 if queued_data:
                     logger.info(f'Calling input function: {self.input} for queued_data')
                     results = await self.input(queued_data)
@@ -46,5 +46,5 @@ class RedisWorker(Worker):
                     logger.info(f'No message received in {self.timeout}')
             except asyncio.CancelledError:
                 # Handle cancellation
-                print(f'Task for {source} cancelled.')
+                logger.info(f'Task for {source_queue} cancelled.')
                 break

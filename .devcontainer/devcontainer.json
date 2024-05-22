@@ -10,7 +10,17 @@
   },
   "containerEnv": {
     "REDIS_URL": "redis://redis:6379/1",
-    "DB_HOST": "postgres"
+    "DB_HOST": "postgres",
+    "REDIS__HOST": "redis",
+    "REDIS__DATABASE": "0",
+    "MONGO__HOST": "mongo",
+    "MONGO__USERNAME": "root",
+    "MONGO__PASSWORD": "example",
+    "MONGO__DATABASE": "NHFM",
+    "QUEUE": "ingest_queue.RedisQueue",
+    "INPUT": "inputs.gbif_search",
+    "OUTPUT": "outputs.dump_to_mongo",
+    "SOURCE_QUEUE": "gbif"
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
