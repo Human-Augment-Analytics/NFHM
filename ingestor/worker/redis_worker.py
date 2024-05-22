@@ -33,7 +33,7 @@ class RedisWorker(Worker):
                     await self.queue.delete(wip_queue, queued_data)
 
                     logger.info(f'Calling output function: {self.output}')
-                    if asyncio.iscoroutine(self.output):
+                    if asyncio.iscoroutinefunction(self.output):
                         await self.output(**self.output_kwargs, data=results)
                     else:
                         self.output(**self.output_kwargs, data=results)

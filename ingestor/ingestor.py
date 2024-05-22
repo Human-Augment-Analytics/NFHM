@@ -3,9 +3,12 @@ import logging
 import signal
 
 from inputs.gbif import gbif_search
-from outputs.json_output import dump_to_json
+# from outputs.json_output import dump_to_json
+from outputs.mongo_output import dump_to_mongo
 from ingest_queue import RedisQueue
 from worker import RedisWorker
+
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -23,6 +26,12 @@ async def main():
     # Setup the redis queue and wait for the healthcheck
     queue = RedisQueue('localhost')
     await queue.healthcheck()
+    # AsyncIOMotorClient is an asynchronous mongodb client
+    mongoclient = AsyncIOMotorClient('localhost', 27017, username='root', password='example')
+    # Dummy function call to force the connection
+    _ = await mongoclient.list_database_names()
+    database: AsyncIOMotorDatabase = mongoclient['NFHM']
+    collection: AsyncIOMotorCollection = database['gbif']
 
     # Sample worker that'll have the "source" of gbif.  The source is just the queue that it'll be 
     # dequeuing from.  This worker also needs it's "input" and "output" functions defined
@@ -33,7 +42,7 @@ async def main():
     # Here, we're saying the output is dump_to_json and the kwargs for that is specifying the filename
     # that will be used.
     workers = [
-        ('gbif', RedisWorker(queue, gbif_search, dump_to_json, {'file_name': 'test_output_func.json'})),
+        ('gbif', RedisWorker(queue, gbif_search, dump_to_mongo, {'collection': collection})),
         # Example of adding another worker task for idigbio, dumping to json
         # ('idigbio', RedisWorker(queue, idigbio_search, dump_to_json, {'file_name': 'test_idigbio_output_func.json'}))
     ]
