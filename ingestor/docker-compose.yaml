@@ -1,0 +1,7 @@
+name: nfhm
+services:
+  redis-stack:
+    ports:
+      - 6379:6379
+      - 8001:8001
+    image: redis/redis-stack:7.2.0-v10
