@@ -22,6 +22,9 @@ This project uses Mongo to store raw data from iDigBio, GBIF, etc.  This allows 
 
 Once you have your development environment running, you can access MongoDB locally by going to http://localhost:8081/.  Alternatively, you can connect to port 27018 on localhost with your preferred Mongo client (e.g., `mongosh`).  The local database is, unoriginally, named `local`.
 
+![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/7c3354ba-8a6f-4ab2-8791-2b1c28e21729)
+
+
 ## Usage
 
 Instructions on how to use your project and any relevant examples.
