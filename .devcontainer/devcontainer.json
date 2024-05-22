@@ -14,10 +14,11 @@
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
-    8000,
+    8000, // Python FastAPI backend
+    8081, // Mongo-Express https://github.com/mongo-express/mongo-express
     5432,
     6379,
-    27017
+    27017 // Mongo DB
   ],
   // Configure tool-specific properties.
   // "customizations": {},
