@@ -16,8 +16,9 @@ services:
     ports:
       - 45679:45679
     depends_on:
-      - redis
-      - postgres
+    - redis
+    - postgres
+    - mongo
 
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -25,28 +26,10 @@ services:
     networks:
       - default
     volumes:
-      - redis-data:/data
+      - redis-data:/data/redis
     ports:
       - 6379:6379
       - 8001:8001
-
-  mongo:
-    image: mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-
-  mongo-express:
-    image: mongo-express
-    restart: unless-stopped
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
-      ME_CONFIG_BASICAUTH: false
 
   postgres:
     image: postgres:16
@@ -59,6 +42,32 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
+  mongo:
+    image: mongo:latest
+    restart: unless-stopped
+    networks:
+    - default
+    volumes:
+      - mongodb-data:/data/mongo
+    ports:
+    - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME:
+      MONGO_INITDB_ROOT_PASSWORD:
+      MONGO_INITDB_DATABASE: local
+
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME:
+      ME_CONFIG_MONGODB_ADMINPASSWORD:
+      ME_CONFIG_MONGODB_URL: mongodb://:@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
+
 volumes:
   postgres-data:
   redis-data:
+  mongodb-data:
