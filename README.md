@@ -40,6 +40,15 @@ Once you have your development environment running, you can access MongoDB local
 ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/7c3354ba-8a6f-4ab2-8791-2b1c28e21729)
 
 
+## Accessing Redis
+
+Redis -- as of this writing -- is used as a queueing backend during data ingestion and processing.  In the future, we may use redis for other things, too.
+
+To access the local Redis server with [Redis Insight](https://redis.io/insight/) during development, navigate to http://localhost:8001/.  You should also be able to directly connect your preferred Redis client (e.g., `redis-cli`) by directly connecting to your local host at the default Redis port `6379`.
+
+![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/cf36476e-6b8e-4832-afa4-0bead6da7214)
+
+
 ## Usage
 
 Instructions on how to use your project and any relevant examples.
