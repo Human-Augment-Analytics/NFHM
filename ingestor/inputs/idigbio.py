@@ -5,7 +5,7 @@ import asyncio
 import json
 
 
-logger = getLogger('endpoint.gbif')
+logger = getLogger('idigbio.gbif')
 
 # iDigBio search wiki: https://github.com/iDigBio/idigbio-search-api/wiki
 url = 'https://search.idigbio.org/v2/search/records'
