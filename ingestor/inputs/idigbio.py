@@ -32,13 +32,8 @@ async def gbif_search(search_dict: dict) -> list[dict[Any, Any]]:
         if r.status_code == 200:
             try:
                 data = r.json()
-                print(data)
                 for record in data['items']:
                     logger.info(f'Parsing {record['uuid']}')
-                    # media_query_params = {
-                    #     'limit': 20,
-                    #     'offset': 0
-                    # }
                     record['media'] = []
                     for uuid in record['indexTerms']['mediarecords']:
                         mr = await client.get(media_url.format(uuid=uuid))
@@ -49,8 +44,7 @@ async def gbif_search(search_dict: dict) -> list[dict[Any, Any]]:
                             except Exception:
                                 logger.exception(f'Failed to get the media with UUID {uuid}, belonging to record {record['uuid']}')
                         logger.info(f'Found media record for {uuid}')
-
-                        record['media'].extend(media_data)
+                        record['media'].append(media_data)
                 return data
             except Exception:
                 logger.exception('Failed to parse the response to json')
