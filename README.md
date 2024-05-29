@@ -8,6 +8,7 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 - [Local Setup](#local-setup)
 - [Seeding Mongo with Raw Data](#seeding-mongo-with-raw-data)
    - [Seeding Mongo with a sample of iDigBio data](#seeding-mongo-with-a-sample-of-idigbio-data)
+   - [Seeding Mongo with a sample of GBIF data](#seeding-mongo-with-a-sample-of-gbif-data)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
 - [Accessing the Postgres Database](#accessing-the-postgres-database)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
@@ -34,15 +35,26 @@ We use [Mongo](#accessing-the-mongo-database) to house the raw data we import fr
 ### Seeding Mongo with a sample of iDigBio data:
 1) Start by spinning up the iDigBio worker.
    - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can pass them in via the command line.  We'll do the latter:
-      - (from within the dev container): `$ SOURCE_QUEUE="idigbio" INPUT="inputs.idigbio_search" python ingestor/ingestor.py`
+      - (from within the dev container): 
+         - `$ SOURCE_QUEUE="idigbio" INPUT="inputs.idigbio_search" python ingestor/ingestor.py`
+       ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/b77126f5-288f-4c55-b2b0-69768903e011)
+
 2) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
 3) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
 3) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench:
    - `LPUSH idigbio '{"search_dict":{"order":"lepidoptera","hasImage":true,"data.dwc:institutionCode":"YPM"},"import_all":true}'`
    -  `search_dict` is the verbatim query passed to the iDigBio API.  Consult the [wiki](https://www.idigbio.org/wiki/index.php/Wiki_Home) and [the github wiki](https://github.com/iDigBio/idigbio-search-api/wiki) for search options.
    - `import_all` is a optional param (default: False) that'll iteratre through all pages of results and import the raw data into Mongo.  Otherwise, only the first page of results are fetched.  Consequently, please be mindful when setting this param as there are _a lot_ (~200 GB, not including media data) of records in iDigBio.
-4) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
+   - ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/0bbc0cc7-fff1-4b1a-927f-1fe9f153de06)
 
+4) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
+![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/c02e6279-92fa-4dca-81d4-21deb53dbf2c)
+
+### Seeding Mongo with a sample of GBIF data:
+The basic process of seeding Mongo with raw GBIF data is essentially the same as with iDigBio.  However, you'll need make sure you have the GBIF worker up-and-running in your dev container with the correct environment inputs:
+- `$ SOURCE_QUEUE="gbif" INPUT="inputs.gbif_search" python ingestor/ingestor.py`
+- From the workbench of Redis Insight, pass a simple search string to the `gbif` queue:
+   - `LPUSH gbif "puma concolor"`
 
 ## Accessing the Postgres Database
 
