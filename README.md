@@ -5,12 +5,17 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [Usage](#usage)
+- [Local Setup](#local-setup)
+- [Seeding Mongo with Raw Data](#seeding-mongo-with-raw-data)
+   - [Seeding Mongo with a sample of iDigBio data](#seeding-mongo-with-a-sample-of-idigbio-data)
+- [Accessing the Mongo Database](#accessing-the-mongo-database)
+- [Accessing the Postgres Database](#accessing-the-postgres-database)
+- [Accessing the Mongo Database](#accessing-the-mongo-database)
+- [Accessing Redis](#accessing-redis)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Installation
+## Local Setup
 
 For optimal portability, this app uses [Dev Containers](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-a-dev-container-configuration/introduction-to-dev-containers) to configure and manage the development environment. This means any developer with Docker installed and an appropriate IDE (e.g., [VSCode](https://code.visualstudio.com/docs/devcontainers/containers), [GitHub Codespaces](https://docs.github.com/en/codespaces/overview), a [JetBrains IDE](https://www.jetbrains.com/help/idea/connect-to-devcontainer.html) if you like debugging) or the [Dev Container CLI](https://github.com/devcontainers/cli) should be able to get this project running locally in just a few steps.
 
@@ -21,6 +26,23 @@ To run locally:
   
 2) (SUBJECT TO CHANGE): run `$ bin/dev` to start the python backend.
 3) Visit `http://localhost:8000/`
+
+## Seeding Mongo with Raw Data
+
+We use [Mongo](#accessing-the-mongo-database) to house the raw data we import from iDigBio, GBIF, and any other external sources.  We use [Redis](#accessing-redis) as our queueing backend.  To seed your local environment with a sample of data to work with, you'll need to first follow the instructions above for [local setup](#local-setup).
+
+### Seeding Mongo with a sample of iDigBio data:
+1) Start by spinning up the iDigBio worker.
+   - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can pass them in via the command line.  We'll do the latter:
+      - (from within the dev container): `$ SOURCE_QUEUE="idigbio" INPUT="inputs.idigbio_search" python ingestor/ingestor.py`
+2) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
+3) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
+3) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench:
+   - `LPUSH idigbio '{"search_dict":{"order":"lepidoptera","hasImage":true,"data.dwc:institutionCode":"YPM"},"import_all":true}'`
+   -  `search_dict` is the verbatim query passed to the iDigBio API.  Consult the [wiki](https://www.idigbio.org/wiki/index.php/Wiki_Home) and [the github wiki](https://github.com/iDigBio/idigbio-search-api/wiki) for search options.
+   - `import_all` is a optional param (default: False) that'll iteratre through all pages of results and import the raw data into Mongo.  Otherwise, only the first page of results are fetched.  Consequently, please be mindful when setting this param as there are _a lot_ (~200 GB, not including media data) of records in iDigBio.
+4) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
+
 
 ## Accessing the Postgres Database
 
