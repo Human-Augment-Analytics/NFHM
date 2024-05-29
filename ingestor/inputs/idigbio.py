@@ -57,8 +57,8 @@ async def idigbio_search(args: str, opts: dict) -> list[dict[Any, Any]]:
                 if (import_all):
                     # Push job for next page of results onto queue
                     queue = opts['queue']
-                    offset = query_params['offset'] + pagesize
-                    next_job = { 'search_dict': search_dict, 'import_all': True, offset: offset }
+                    offset = params.get('offset', 0) + pagesize
+                    next_job = { 'search_dict': search_dict, 'import_all': True, 'offset': offset }
                     if (data['itemCount'] > offset):
                         logger.info(f'Enqueuing next job with offset {offset} out of {data['itemCount']} records.')
                         await queue.enqueue('idigbio', json.dumps(next_job))
