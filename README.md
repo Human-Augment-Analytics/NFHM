@@ -25,7 +25,7 @@ To run locally:
    ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/ba3aec85-a5f2-42a3-bf87-2d1f423305eb)
 
   
-2) (SUBJECT TO CHANGE): run `$ bin/dev` to start the python backend.
+2) (SUBJECT TO CHANGE): run `$ conda activate backend_api && bin/dev` to start the python backend.
 3) Visit `http://localhost:8000/`
 
 ## Seeding Mongo with Raw Data
@@ -33,21 +33,22 @@ To run locally:
 We use [Mongo](#accessing-the-mongo-database) to house the raw data we import from iDigBio, GBIF, and any other external sources.  We use [Redis](#accessing-redis) as our queueing backend.  To seed your local environment with a sample of data to work with, you'll need to first follow the instructions above for [local setup](#local-setup).
 
 ### Seeding Mongo with a sample of iDigBio data:
-1) Start by spinning up the iDigBio worker.
+1) Activate the ingestor_worker conda environment: `$ conda activate ingestor_worker`
+2) Start by spinning up the iDigBio worker.
    - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can pass them in via the command line.  We'll do the latter:
       - (from within the dev container): 
          - `$ SOURCE_QUEUE="idigbio" INPUT="inputs.idigbio_search" python ingestor/ingestor.py`
        ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/b77126f5-288f-4c55-b2b0-69768903e011)
 
-2) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
-3) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
-3) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench:
+3) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
+4) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
+5) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench:
    - `LPUSH idigbio '{"search_dict":{"order":"lepidoptera","hasImage":true,"data.dwc:institutionCode":"YPM"},"import_all":true}'`
    -  `search_dict` is the verbatim query passed to the iDigBio API.  Consult the [wiki](https://www.idigbio.org/wiki/index.php/Wiki_Home) and [the github wiki](https://github.com/iDigBio/idigbio-search-api/wiki) for search options.
    - `import_all` is a optional param (default: False) that'll iteratre through all pages of results and import the raw data into Mongo.  Otherwise, only the first page of results are fetched.  Consequently, please be mindful when setting this param as there are _a lot_ (~200 GB, not including media data) of records in iDigBio.
    - ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/0bbc0cc7-fff1-4b1a-927f-1fe9f153de06)
 
-4) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
+6) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
 ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/c02e6279-92fa-4dca-81d4-21deb53dbf2c)
 
 ### Seeding Mongo with a sample of GBIF data:
