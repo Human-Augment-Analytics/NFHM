@@ -43,7 +43,7 @@ async def idigbio_search(args: str, opts: dict) -> list[dict[Any, Any]]:
             try:
                 data = r.json()
                 for record in data['items']:
-                    logger.info(f'Parsing {record['uuid']}')
+                    logger.info(f'Parsing {record["uuid"]}')
                     record['media'] = []
                     for uuid in record['indexTerms']['mediarecords']:
                         mr = await client.get(media_url.format(uuid=uuid))
@@ -51,7 +51,7 @@ async def idigbio_search(args: str, opts: dict) -> list[dict[Any, Any]]:
                             try:
                                 media_data = mr.json()
                             except Exception:
-                                logger.exception(f'Failed to get the media with UUID {uuid}, belonging to record {record['uuid']}')
+                                logger.exception(f'Failed to get the media with UUID {uuid}, belonging to record {record["uuid"]}')
                         logger.info(f'Found media record for {uuid}')
                         record['media'].append(media_data)
                 if (import_all):
@@ -60,7 +60,7 @@ async def idigbio_search(args: str, opts: dict) -> list[dict[Any, Any]]:
                     offset = params.get('offset', 0) + pagesize
                     next_job = { 'search_dict': search_dict, 'import_all': True, 'offset': offset }
                     if (data['itemCount'] > offset):
-                        logger.info(f'Enqueuing next job with offset {offset} out of {data['itemCount']} records.')
+                        logger.info(f'Enqueuing next job with offset {offset} out of {data["itemCount"]} records.')
                         await queue.enqueue('idigbio', json.dumps(next_job))
 
                 return data['items']
