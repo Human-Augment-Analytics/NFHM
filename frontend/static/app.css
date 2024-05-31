@@ -1,0 +1,23 @@
+.image-container{
+    width: 90%;
+    height: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.image-container img{
+    width: 20rem;
+    height: 20rem;
+    margin: 0.75rem;
+    margin-top: 1rem;
+    border-radius: 1rem;
+    transition: 0.5s;
+}
+
+.image-container img:hover{
+    transform: scale(1.1);
+}
