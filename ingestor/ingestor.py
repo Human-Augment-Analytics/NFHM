@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from exceptions import StartupException
 from inputs import gbif_search
+from inputs import idigbio_search
 # from outputs.json_output import dump_to_json
 from outputs import dump_to_mongo
 from ingest_queue import RedisQueue, BaseQueue
