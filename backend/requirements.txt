@@ -1,3 +1,5 @@
 fastapi
 fastapi-cli
 uvicorn
+pydantic
+python-multipart
