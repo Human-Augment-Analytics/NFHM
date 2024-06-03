@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from models.record import Record
@@ -6,8 +6,12 @@ from models.record import Record
 router = APIRouter()
 
 @router.post("/search")
-async def search(search_param: str = Form(...), image: UploadFile = File(...)):
+async def search(search_param: Optional[str] = Form(None), image: Optional[UploadFile] = File(None)):
     # For demonstration purposes, we'll just return the search_param and filename
+
+    if search_param is None and image is None:
+        raise HTTPException(status_code=400, detail="At least one of search_param or image must be provided.")
+
     records = [
         Record(id=1,
                name="Specimen from the Natural History Museum of Los Angeles, Invertebrate Paleontology Department (LACMIP).",
@@ -27,7 +31,7 @@ async def search(search_param: str = Form(...), image: UploadFile = File(...)):
     ]
     return {
         "search_param": search_param,
-        "filename": image.filename,
+        "filename": image and image.filename,
         "record_count": len(records),
         "records": records
     }
