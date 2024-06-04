@@ -15,4 +15,4 @@ app.mount("/static", StaticFiles(directory="../frontend/static"), name="static")
 @app.get("/")
 def hello_api():
     # return {"msg":"Hello FastAPI🚀"}
-    return FileResponse('../frontend/index.html')
+    return FileResponse('../frontend/index3.html')

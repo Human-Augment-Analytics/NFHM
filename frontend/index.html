@@ -4,56 +4,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioSight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="static/app3.css" />
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.11.1/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="static/app.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3.4.9/dist/vue.global.js" defer></script>
+    <script src="static/app3.js" defer></script>
+    <title>BioCosmos</title>
 </head>
 
 <body>
-    <div class="hero min-h-full min-w-full bg-base-200">
-        <div class="hero-content text-center">
-            <div class="max-w-4xl">
-                <h1 class="text-5xl font-bold">BioSight</h1>
-                <div class="pt-4">
-                    <input type="text" placeholder="Type here"
-                        class="input input-bordered w-full max-w-xs query-input" />
-                    <input type="file"
-                        class="file-input file-input-bordered file-input-primary w-full max-w-xs image-input" />
+    <div id="app">
+        <div class="view-image" v-show="focusImage">
+            <span @click="closeFocus">X</span>
+            <div class="image-content">
+                <div class="text-content">
+                    <div class="details">
+                        <h2 class="text-primary">{{ clickedItem.name }}</h2>
+                        <p>{{ clickedItem.description }}</p>
+                    </div>
+                    <div class="image-attributes">
+                        <div class="image-attribute">
+                            <div class="key">Scientific Name</div>
+                            <div class="value">{{ clickedItem.scientific_name }}</div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Source</div>
+                            <div class="value">{{ clickedItem.specimen_source_name }}</div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Global ID</div>
+                            <div class="value">{{ clickedItem.id }}</div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Source Link</div>
+                            <div class="value link"><a href="#">{{ clickedItem.specimen_source_name }}</a></div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Image Link</div>
+                            <div class="value link"><a :href="clickedItem.image_link">{{ clickedItem.image_source_name
+                                    }}</a></div>
+                        </div>
+                    </div>
+
                 </div>
-                <p class="pb-4 pt-2">Search with a natural language query or upload an image to perform a reverse image
-                    search.</p>
-                <button class="btn btn-primary search-button">Search</button>
-                <button class="btn btn-outline btn-secondary clear-button">Clear</button>
+                <div class="image-src">
+                    <img alt="" :src="clickedItem.image_link">
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="heading">
+                <h3>Bio<span>Cosmos</span></h3>
+                <div class="inp-button">
+                    <div class="inputs">
+                        <input type="text" placeholder="Search" name="searchQuery" id="searchQuery"
+                            class="search-query input input-bordered input-primary" :value="inputQuery"
+                            @input="searchQueryChanged">
+                        <p>OR</p>
+                        <input type="file" name="fileUpload" id="fileUpload"
+                            class="file-upload file-input file-input-bordered file-input-primary"
+                            @change="uploadFileChanged" ref="fileUploadElement">
+                    </div>
+                    <div class="buttons">
+                        <button class="btn btn-primary" @click="submitQuery">Search</button>
+                        <p>|</p>
+                        <button type="reset" class="btn btn-outline btn-secondary" @click="resetAll">Reset</button>
+                    </div>
+                    <p>Search with a natural language query or upload an image to perform a reverse image
+                        search.</p>
+                </div>
+            </div>
+            <div class="box" v-show="displayResults">
+
+                <div class="img-column" v-for="column in columns">
+                    <template v-for="value in column">
+                        <img :src="value.image_link" class="img-fluid" :id="value.id" @click="displayImage" />
+                    </template>
+                </div>
             </div>
         </div>
     </div>
-    <div class="image-container">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&1">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&2">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&3">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&4">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&5">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&6">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&7">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&8">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&9">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&10">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&11">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&12">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&13">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&14">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&15">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&16">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&17">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&18">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&19">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&20">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&21">
-        <img alt="" src="https://source.unsplash.com/random/?Animal&22">
-    </div>
-
-    <script src="static/app.js"></script>
 </body>
 
 </html>
