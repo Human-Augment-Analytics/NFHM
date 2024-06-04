@@ -1,7 +1,12 @@
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from models.record import Record
+import json
+import os
+file_path = os.path.join(os.path.dirname(__file__), "record_sample.json")
+with open(file_path) as file:
+    sample_data = json.load(file)
 
 router = APIRouter()
 
@@ -12,22 +17,20 @@ async def search(search_param: Optional[str] = Form(None), image: Optional[Uploa
     if search_param is None and image is None:
         raise HTTPException(status_code=400, detail="At least one of search_param or image must be provided.")
 
-    records = [
-        Record(id=1,
-               name="Specimen from the Natural History Museum of Los Angeles, Invertebrate Paleontology Department (LACMIP).",
-               uuid='foo',
-               media_url='http://digitalgallery.nhm.org:8085/invertpaleo_nhm/api/v1/asset/771612/preview'
-               ),
-        Record(id=2,
-               name="Specimen from the Natural History Museum of Los Angeles, Invertebrate Paleontology Department (LACMIP).",
-               uuid='foo-bar',
-               media_url='http://digitalgallery.nhm.org:8085/invertpaleo_nhm/api/v1/asset/752617/preview'
-               ),
-        Record(id=3,
-               name="Specimen from the Natural History Museum of Los Angeles, Invertebrate Paleontology Department (LACMIP).",
-               uuid='foo-bar-baz',
-               media_url='http://digitalgallery.nhm.org:8085/invertpaleo_nhm/api/v1/asset/771612/preview'
-               ),
+    records: List[Record] = [
+        Record(
+            id=index + 1,
+            name=item.get("name", ""),
+            scientific_name=item.get("scientific_name", ""),
+            latitude=item.get("latitude", 0.0),
+            longitude=item.get("longitude", 0.0),
+            description=item.get("description", ""),
+            image_source_name=item.get("image_source_name", ""),
+            specimen_source_name=item.get("specimen_source_name", ""),
+            external_id=item.get("id"),
+            media_url=item.get("media_url", None)
+        )
+        for index, item in enumerate(sample_data)
     ]
     return {
         "search_param": search_param,

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from typing import Optional
 
 class Record(BaseModel):
     """
@@ -12,5 +12,11 @@ class Record(BaseModel):
     """
     id: int
     name: str
-    uuid: str
-    media_url: str
+    scientific_name: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float] 
+    description: Optional[str]
+    image_source_name: Optional[str]
+    specimen_source_name: Optional[str]
+    external_id: str
+    media_url: Optional[str]
