@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="static/app3.css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.11.1/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/vue@3.4.9/dist/vue.global.js" defer></script>
+    <script src="static/app3.js" defer></script>
+    <title>BioCosmos</title>
+</head>
+
+<body>
+    <div id="app">
+        <div class="view-image" v-show="focusImage">
+            <span @click="closeFocus">X</span>
+            <div class="image-content">
+                <div class="text-content">
+                    <div class="details">
+                        <h2 class="text-primary">{{ clickedItem.name }}</h2>
+                        <p>{{ clickedItem.description }}</p>
+                    </div>
+                    <div class="image-attributes">
+                        <div class="image-attribute">
+                            <div class="key">Scientific Name</div>
+                            <div class="value">{{ clickedItem.scientific_name }}</div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Source</div>
+                            <div class="value">{{ clickedItem.specimen_source_name }}</div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Global ID</div>
+                            <div class="value">{{ clickedItem.id }}</div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Source Link</div>
+                            <div class="value link"><a href="#">{{ clickedItem.specimen_source_name }}</a></div>
+                        </div>
+                        <div class="image-attribute">
+                            <div class="key">Image Link</div>
+                            <div class="value link"><a :href="clickedItem.image_link">{{ clickedItem.image_source_name
+                                    }}</a></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="image-src">
+                    <img alt="" :src="clickedItem.image_link">
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="heading">
+                <h3>Bio<span>Cosmos</span></h3>
+                <div class="inp-button">
+                    <div class="inputs">
+                        <input type="text" placeholder="Search" name="searchQuery" id="searchQuery"
+                            class="search-query input input-bordered input-primary" :value="inputQuery"
+                            @input="searchQueryChanged">
+                        <p>OR</p>
+                        <input type="file" name="fileUpload" id="fileUpload"
+                            class="file-upload file-input file-input-bordered file-input-primary"
+                            @change="uploadFileChanged" ref="fileUploadElement">
+                    </div>
+                    <div class="buttons">
+                        <button class="btn btn-primary" @click="submitQuery">Search</button>
+                        <p>|</p>
+                        <button type="reset" class="btn btn-outline btn-secondary" @click="resetAll">Reset</button>
+                    </div>
+                    <p>Search with a natural language query or upload an image to perform a reverse image
+                        search.</p>
+                </div>
+            </div>
+            <div class="box" v-show="displayResults">
+
+                <div class="img-column" v-for="column in columns">
+                    <template v-for="value in column">
+                        <img :src="value.image_link" class="img-fluid" :id="value.id" @click="displayImage" />
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
