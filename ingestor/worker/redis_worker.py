@@ -5,7 +5,7 @@ import asyncio
 from logging import getLogger
 from typing import Any, Awaitable, Callable
 
-MessageProcessFunc = Callable[[str], Awaitable[None]]
+MessageProcessFunc = Callable[[str, dict], Awaitable[None]]
 logger = getLogger('worker.redis')
 
 
@@ -27,7 +27,7 @@ class RedisWorker(Worker):
                 queued_data = await self.queue.dequeue(source_queue, timeout=self.timeout, wip_queue=wip_queue)
                 if queued_data:
                     logger.info(f'Calling input function: {self.input} for queued_data')
-                    results = await self.input(queued_data)
+                    results = await self.input(queued_data, { 'queue': self.queue })
                     logger.info(f'Processing message returned {len(results)} from the search')
                     logger.info('Deleting from the wip queue')
                     await self.queue.delete(wip_queue, queued_data)

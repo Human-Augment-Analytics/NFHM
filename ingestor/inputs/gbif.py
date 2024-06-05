@@ -8,7 +8,7 @@ url = 'https://api.gbif.org/v1/species/suggest'
 media_url = 'https://api.gbif.org/v1/species/{gbif_id}/media'
 
 
-async def gbif_search(search_string) -> list[dict[Any, Any]]:
+async def gbif_search(search_string, opts: dict) -> list[dict[Any, Any]]:
     async with httpx.AsyncClient() as client:
         query_params = {
             'q': search_string
