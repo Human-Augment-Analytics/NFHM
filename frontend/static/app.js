@@ -12,6 +12,7 @@ const app = Vue.createApp({
     };
   },
   methods: {
+    rand(){ return Math.floor(Math.random() * 90)},
     async submitQuery(event) {
       this.columns = [[], [], [], []]
       this.items = {}
@@ -24,6 +25,7 @@ const app = Vue.createApp({
       for (index in fake_data) {
         column_number = index % 4;
         const item = fake_data[index];
+        item.image_link = 'https://picsum.photos/'+(200+this.rand())+'/' + (300 + this.rand()) +'?random=' + column_number + 1;
         this.columns[column_number].push(item);
         this.items[item.id] = item;
       }
