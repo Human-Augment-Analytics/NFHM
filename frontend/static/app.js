@@ -12,7 +12,10 @@ const app = Vue.createApp({
     };
   },
   methods: {
+    rand(){ return Math.floor(Math.random() * 90)},
     async submitQuery(event) {
+      this.columns = [[], [], [], []]
+      this.items = {}
       const fake_data = await fetch("static/mock_data.json").then(function (
         response
       ) {
@@ -22,19 +25,11 @@ const app = Vue.createApp({
       for (index in fake_data) {
         column_number = index % 4;
         const item = fake_data[index];
+        item.image_link = 'https://picsum.photos/'+(200+this.rand())+'/' + (300 + this.rand()) +'?random=' + column_number + 1;
         this.columns[column_number].push(item);
         this.items[item.id] = item;
       }
-      console.log(this.items);
-      console.log(this.columns);
       this.displayResults = true;
-      console.log(this.inputQuery);
-    },
-    resetAll(event) {
-      this.displayResults = false;
-      this.fileQuery = "";
-      this.inputQuery = "";
-      this.$refs.fileUploadElement.value = null;
     },
     uploadFileChanged(event) {
       const files = event.target.files;
@@ -43,6 +38,7 @@ const app = Vue.createApp({
         this.inputQuery = "";
         console.log(this.fileQuery);
       }
+      this.submitQuery(event)
     },
     searchQueryChanged(event) {
       this.inputQuery = event.target.value;
