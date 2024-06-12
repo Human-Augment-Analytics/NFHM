@@ -87,10 +87,13 @@ async def main():
     if settings.queue.__name__ == 'RedisQueue':
         worker_kwargs['queue'] = settings.queue(**settings.redis.model_dump())
         worker_klass = RedisWorker
+
+        if settings.output.__name__ == 'dump_to_redis':
+            worker_kwargs['output_kwargs']['client'] = worker_kwargs['queue'].conn
     await worker_kwargs['queue'].healthcheck()
 
     # We're using mongo
-    if settings.mongo:
+    if settings.mongo and settings.output.__name__ == 'dump_to_mongo':
         # AsyncIOMotorClient is an asynchronous mongodb client
         mongoclient = AsyncIOMotorClient(
             settings.mongo.host,

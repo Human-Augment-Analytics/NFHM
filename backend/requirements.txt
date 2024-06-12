@@ -3,3 +3,4 @@ fastapi-cli
 uvicorn
 pydantic
 python-multipart
+redisvl==0.2.0

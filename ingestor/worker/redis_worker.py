@@ -34,8 +34,10 @@ class RedisWorker(Worker):
 
                     logger.info(f'Calling output function: {self.output}')
                     if asyncio.iscoroutinefunction(self.output):
+                        logger.info('Calling with await')
                         await self.output(**self.output_kwargs, data=results)
                     else:
+                        logger.info('Calling sync')
                         self.output(**self.output_kwargs, data=results)
                     # logger.info(f'Queueing the results to {ingest_queue}')
                     # with open('test.json', 'w+') as outfile:
@@ -48,3 +50,5 @@ class RedisWorker(Worker):
                 # Handle cancellation
                 logger.info(f'Task for {source_queue} cancelled.')
                 break
+            except Exception:
+                logger.exception('Exception occurred!')

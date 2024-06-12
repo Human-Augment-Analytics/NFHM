@@ -1,0 +1,46 @@
+version: "0.1.0"
+
+index:
+  name: specimens
+  prefix: specimens
+
+fields:
+  - name: collectiondate
+    type: numeric
+  - name: highertaxon
+    type: tag
+    attrs:
+      separator: ;
+  - name: commonname
+    type: tag
+    attrs:
+      separator: ;
+  - name: scientificname
+    type: text
+  - name: recordedby
+    type: text
+  - name: location # long,lat array
+    type: geo
+  - name: kingdom
+    type: tag
+  - name: phylum
+    type: tag
+  - name: class
+    type: tag
+  - name: order
+    type: tag
+  - name: family
+    type: tag
+  - name: catalognumber
+    type: text
+  - name: earliest_epoch_or_lowest_series
+    type: tag
+  - name: earliest_age_or_lowest_stage
+    type: tag
+  - name: embedding
+    type: vector
+    attrs:
+      algorithm: flat
+      dims: 3
+      distance_metric: cosine
+      datatype: float32
