@@ -70,8 +70,23 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
       ME_CONFIG_BASICAUTH: false
+  
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      # - jupyter-data:/home/jovyan/work
+      - ../jupyter-workpad:/home/jovyan/work
+    ports:
+      - 8888:8888
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: "this_is_the_token"
 
 volumes:
   postgres-data:
   redis-data:
   mongodb-data:
+  

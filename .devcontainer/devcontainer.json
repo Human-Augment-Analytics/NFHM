@@ -28,7 +28,8 @@
     8081, // Mongo-Express https://github.com/mongo-express/mongo-express
     5432,
     6379,
-    27017 // Mongo DB
+    27017, // Mongo DB
+    8888 // Jupyter Notebook
   ],
   // Configure tool-specific properties.
   // "customizations": {},
