@@ -9,6 +9,7 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 - [Seeding Mongo with Raw Data](#seeding-mongo-with-raw-data)
    - [Seeding Mongo with a sample of iDigBio data](#seeding-mongo-with-a-sample-of-idigbio-data)
    - [Seeding Mongo with a sample of GBIF data](#seeding-mongo-with-a-sample-of-gbif-data)
+- [Jupyter Notebooks](#jupyter-notebooks)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
 - [Accessing the Postgres Database](#accessing-the-postgres-database)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
@@ -27,6 +28,12 @@ To run locally:
   
 2) (SUBJECT TO CHANGE): run `$ conda activate backend_api && bin/dev` to start the python backend.
 3) Visit `http://localhost:8000/`
+
+## Jupyter Notebooks
+
+This project's dev container runs a docker image of jupyter notebooks at http://localhost:8888.  The `/work/` (fullpath: `/home/jovyan/work/`) directory of this container is mounted to this repository on your local filesystem at `./NFHM/jupyter-workpad` so you can check in your notebooks to version control.
+
+Alternatively, you can use a local installation of Jupyter if you prefer.  Regardless, by convention, check your work into the `./jupyter-workpad` subdirectory.
 
 ## Seeding Mongo with Raw Data
 
