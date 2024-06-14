@@ -8,13 +8,13 @@ from typing import Any, Awaitable, Callable
 MessageProcessFunc = Callable[[str, dict], Awaitable[None]]
 logger = getLogger('worker.redis')
 
-
 class RedisWorker(Worker):
-    def __init__(self, queue: RedisQueue, input_func: MessageProcessFunc, output_func: MessageProcessFunc | None = None, output_kwargs: dict[Any, Any] = {}, timeout: int | None = 10):
+    def __init__(self, queue: RedisQueue, input_func: MessageProcessFunc, output_func: MessageProcessFunc | None = None, input_kwargs: dict[Any, Any] = {}, output_kwargs: dict[Any, Any] = {}, timeout: int | None = 10):
         self.queue = queue
         self.input = input_func
         self.output = output_func
         self.output_kwargs = output_kwargs
+        self.input_kwargs = input_kwargs
         self.timeout = timeout
 
     async def work(self, source_queue: str):
@@ -27,7 +27,8 @@ class RedisWorker(Worker):
                 queued_data = await self.queue.dequeue(source_queue, timeout=self.timeout, wip_queue=wip_queue)
                 if queued_data:
                     logger.info(f'Calling input function: {self.input} for queued_data')
-                    results = await self.input(queued_data, { 'queue': self.queue })
+
+                    results = await self.input(queued_data, self.input_kwargs)
                     logger.info(f'Processing message returned {len(results)} from the search')
                     logger.info('Deleting from the wip queue')
                     await self.queue.delete(wip_queue, queued_data)

@@ -102,3 +102,12 @@ Guidelines on how others can contribute to your project.
 ## License
 
 Information about the license for your project.
+
+
+# TMP
+from inside the postgres container:
+apt -y update
+apt -y install postgresql-16-pgvector
+apt -y install postgis
+
+
