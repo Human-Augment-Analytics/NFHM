@@ -4,7 +4,7 @@ const app = Vue.createApp({
       results: [],
       inputQuery: "",
       fileQuery: "",
-      displayResults: true,
+      displayResults: false,
       focusImage: false,
       columns: [[], [], [], []],
       items: {},
@@ -12,33 +12,65 @@ const app = Vue.createApp({
     };
   },
   methods: {
-    rand(){ return Math.floor(Math.random() * 90)},
-    async submitQuery(event) {
-      this.columns = [[], [], [], []]
-      this.items = {}
-      const fake_data = await fetch("static/mock_data.json").then(function (
-        response
-      ) {
-        return response.json();
-      });
+    rand() {
+      return Math.floor(Math.random() * 90);
+    },
+    async addImages(apiResult) {
+      this.columns = [[], [], [], []];
+      this.items = {};
 
-      for (index in fake_data) {
+      for (index in apiResult.records) {
         column_number = index % 4;
-        const item = fake_data[index];
-        item.image_link = 'https://picsum.photos/'+(200+this.rand())+'/' + (300 + this.rand()) +'?random=' + column_number + 1;
+        const item = apiResult.records[index];
+        console.log(item);
+        const url = new URL(item.media_url);
+        item.map_url = `https://maps.google.com/?q=${item.latitude}%2C${item.longitude}`;
+        item.image_source_name = url.host;
         this.columns[column_number].push(item);
         this.items[item.id] = item;
       }
       this.displayResults = true;
     },
+    async submitQuery(event) {
+      // Need to save a reference to this in the function to be able to access
+      // in axios methods
+      var bodyFormData = new FormData();
+      bodyFormData.append("search_param", this.inputQuery);
+      this.queryAPI(bodyFormData);
+    },
     uploadFileChanged(event) {
       const files = event.target.files;
       if (files !== undefined) {
-        this.fileQuery = files[0];
-        this.inputQuery = "";
-        console.log(this.fileQuery);
+        // Need to save a reference to this in the function to be able to access
+        // in axios methods
+        var bodyFormData = new FormData();
+        bodyFormData.append("image", files[0]);
+        this.queryAPI(bodyFormData);
       }
-      this.submitQuery(event)
+    },
+    queryAPI(formData) {
+      var endpoint = window.location.origin + "/api/search";
+      let self = this;
+
+      axios({
+        method: "post",
+        url: endpoint,
+        data: formData,
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+        .then(function (response) {
+          //handle success
+          console.log(response);
+          self.addImages(response.data);
+        })
+        .catch(function (response) {
+          //handle error
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: response.response.data.detail,
+          });
+        });
     },
     searchQueryChanged(event) {
       this.inputQuery = event.target.value;

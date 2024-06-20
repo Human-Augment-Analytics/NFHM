@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 # from core.config import settings
-from controllers.search_controller import router as search_router
+from .controllers.search_controller import router as search_router
 from datetime import datetime
 
 app = FastAPI()

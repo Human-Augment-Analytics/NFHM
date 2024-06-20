@@ -1,14 +1,17 @@
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException
-from pydantic import BaseModel
-from typing import Optional, List
-from models.record import Record
 import json
 import os
+from typing import Optional, List
+
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+
+from ..models.record import Record
+
 file_path = os.path.join(os.path.dirname(__file__), "record_sample.json")
 with open(file_path) as file:
     sample_data = json.load(file)
 
 router = APIRouter()
+
 
 @router.post("/search")
 async def search(search_param: Optional[str] = Form(None), image: Optional[UploadFile] = File(None)):
