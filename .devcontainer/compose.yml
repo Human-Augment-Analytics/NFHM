@@ -50,7 +50,7 @@ services:
     networks:
       - default
     volumes:
-      - mongodb-data:/data/mongo
+      - mongodb-data:/data/db
     ports:
       - 27018:27017
     environment:
