@@ -28,16 +28,26 @@ class RedisWorker(Worker):
                 if queued_data:
                     logger.info(f'Calling input function: {self.input} for queued_data')
 
-                    results = await self.input(queued_data, self.input_kwargs)
+                    try:
+                        results = await self.input(queued_data, self.input_kwargs)
+                    except Exception as e:
+                        logger.error(f'Error processing the input function: {e}')
+                        raise e
                     logger.info(f'Processing message returned {len(results)} from the search')
                     logger.info('Deleting from the wip queue')
                     await self.queue.delete(wip_queue, queued_data)
 
                     logger.info(f'Calling output function: {self.output}')
-                    if asyncio.iscoroutinefunction(self.output):
-                        await self.output(**self.output_kwargs, data=results)
-                    else:
-                        self.output(**self.output_kwargs, data=results)
+                    try:
+                        if asyncio.iscoroutinefunction(self.output):
+                            print(self.output_kwargs)
+                            await self.output(**self.output_kwargs, data=results)
+                        else:
+                            print(self.output_kwargs)
+                            self.output(**self.output_kwargs, data=results)
+                    except Exception as e:
+                        logger.error(f'Error processing the output function: {e}')
+                        raise e
                     # logger.info(f'Queueing the results to {ingest_queue}')
                     # with open('test.json', 'w+') as outfile:
                     #     import json

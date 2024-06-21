@@ -44,4 +44,4 @@ url-normalize==1.4.3
 urllib3==2.2.1
 wheel==0.43.0
 asyncpg==0.29.0
-clip-by-openai @ git+https://github.com/openai/CLIP.git
+open_clip_torch

@@ -45,12 +45,12 @@ class MongoSettings(BaseModel):
     password: str | None = None
     input_collection: str = Field(default='idigbio')
 
-class Postgres(BaseModel):
+class PostgresSettings(BaseModel):
     host: str
     port: int = Field(default=5432)
-    database: str = Field(default='NFHM')
+    database: str = Field(default='nfhm')
     table: str = Field(default='search_records')
-    username: str | None = None
+    user: str | None = None
     password: str | None = None
 
 class Settings(BaseSettings):
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     source_queue: str
     redis: RedisSettings | None = None
     mongo: MongoSettings | None = None
-    postgres: Postgres | None = None
+    postgres: PostgresSettings | None = None
     queue: ImportString[Type[BaseQueue]] = Field(default='ingest_queue.RedisQueue')
     input: ImportString[Callable[[Any], Any]] = Field(default='inputs.gbif_search')
     output: ImportString[Callable[[Any], Any]] = Field(default='outputs.dump_to_mongo')
@@ -119,25 +119,26 @@ async def main():
         _ = await mongoclient.list_database_names()
         database: AsyncIOMotorDatabase = mongoclient[settings.mongo.database]
         collection: AsyncIOMotorCollection = database[settings.source_queue]
-        worker_kwargs['output_kwargs']['collection'] = collection
         # Some input functions need access to Mongo client for input.
-        if (settings.mongo.input_collection):
+        if worker_kwargs['output_func'] == 'outputs.dump_to_mongo':
+            worker_kwargs['output_kwargs']['collection'] = collection
+        if settings.mongo.input_collection:
             worker_kwargs['input_kwargs']['mongo_database'] = database
             worker_kwargs['input_kwargs']['mongo_collection'] = database[settings.mongo.input_collection]
 
     if settings.postgres:
-        # AsyncIOMotorClient is an asynchronous mongodb client
         conn = await asyncpg.connect(
             host=settings.postgres.host,
             port=settings.postgres.port,
             database=settings.postgres.database,
-            user=settings.postgres.username,
+            user=settings.postgres.user,
             password=settings.postgres.password
         )
         # Confirm connection
         _ = await conn.fetch("SELECT datname FROM pg_database")
         
         worker_kwargs['output_kwargs']['conn'] = conn
+        worker_kwargs['output_kwargs']['table'] = settings.postgres.table
 
     
     # D.I. queue for the input functions

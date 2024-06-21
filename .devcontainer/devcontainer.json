@@ -10,7 +10,10 @@
   },
   "containerEnv": {
     "REDIS_URL": "redis://redis:6379/1",
-    "POSTGRES_HOST": "postgres",
+    "POSTGRES__HOST": "postgres",
+    "POSTGRES__PORT": "5432",
+    "POSTGRES__USER": "postgres",
+    "POSTGRES__PASSWORD": "postgres",
     "REDIS__HOST": "redis",
     "REDIS__DATABASE": "0",
     "MONGO__HOST": "mongo",
