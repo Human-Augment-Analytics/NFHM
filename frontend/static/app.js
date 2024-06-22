@@ -12,9 +12,6 @@ const app = Vue.createApp({
     };
   },
   methods: {
-    rand() {
-      return Math.floor(Math.random() * 90);
-    },
     async addImages(apiResult) {
       this.columns = [[], [], [], []];
       this.items = {};
@@ -22,7 +19,6 @@ const app = Vue.createApp({
       for (index in apiResult.records) {
         column_number = index % 4;
         const item = apiResult.records[index];
-        console.log(item);
         const url = new URL(item.media_url);
         item.map_url = `https://maps.google.com/?q=${item.latitude}%2C${item.longitude}`;
         item.image_source_name = url.host;
@@ -60,7 +56,6 @@ const app = Vue.createApp({
       })
         .then(function (response) {
           //handle success
-          console.log(response);
           self.addImages(response.data);
         })
         .catch(function (response) {
@@ -82,11 +77,21 @@ const app = Vue.createApp({
     displayImage(event) {
       this.clickedItem = this.items[event.target.id];
       this.focusImage = true;
-      console.log(this.clickedItem);
     },
     closeFocus(event) {
       this.focusImage = false;
     },
+    keyDownHandler(event) {
+      if (event.key === "Escape" && this.focusImage) {
+        this.focusImage = false;
+      }
+    },
+  },
+  created() {
+    window.addEventListener("keydown", this.keyDownHandler);
+  },
+  destroyed() {
+    window.removeEventListener("keydown", this.keyDownHandler);
   },
 });
 

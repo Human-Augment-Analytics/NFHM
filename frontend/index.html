@@ -60,7 +60,8 @@
                     </div>
                 </div>
                 <div class="image-src">
-                    <img alt="" :src="clickedItem.media_url" />
+                    <img alt="" :src="clickedItem.media_url"
+                        onerror="this.onerror=''; this.src='static/unavailable-image.jpg';" />
                 </div>
             </div>
         </div>
@@ -101,7 +102,8 @@
             <div class="box" v-if="displayResults">
                 <div class="img-column" v-for="column in columns">
                     <template v-for="value in column">
-                        <img :src="value.media_url" class="img-fluid" :id="value.id" @click="displayImage" />
+                        <img :src="value.media_url" onerror="this.onerror=''; this.src='static/unavailable-image.jpg';"
+                            class="img-fluid" :id="value.id" @click="displayImage" />
                     </template>
                 </div>
             </div>
