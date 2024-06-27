@@ -28,6 +28,9 @@ To run locally:
   
 2) (SUBJECT TO CHANGE): run `$ conda activate backend_api && bin/dev` to start the python backend.
 3) Visit `http://localhost:8000/`
+4) (SUBJECT TO CHANGE) Here is a mock screenshot of how you can expect the website to look:
+   
+![BioCosmos Image Search](https://github.com/bharatr21/NFHM/assets/13381361/6b335845-56d2-49a8-85bf-95e06c65b9d3)
 
 ## Jupyter Notebooks
 
