@@ -12,6 +12,7 @@ import asyncio
 import json
 import torch
 import open_clip
+from datetime import datetime
 
 
 logger = getLogger('vector_embedder')
@@ -32,7 +33,6 @@ async def load_model():
     tokenizer = open_clip.get_tokenizer('ViT-B-32')
     logger.info("Model loaded")
 
-
 def input_data_mapper(media: dict, line: dict) -> dict:
     tmp_d = {
         "uuid": line.get("uuid"),
@@ -51,7 +51,7 @@ def input_data_mapper(media: dict, line: dict) -> dict:
         "higher_taxon": line.get("indexTerms", {}).get("highertaxon"),
         "earliest_epoch_or_lowest_series": line.get("indexTerms", {}).get("earliestepochorlowestseries"),
         "earliest_age_or_lowest_stage": line.get("indexTerms", {}).get("earliestageorloweststage"),
-        "collection_date": line.get("data", {}).get("dwc:eventDate")
+        "collection_date": line.get("indexTerms", {}).get("datecollected")
     }
 
     if line.get("indexTerms", {}).get("geopoint", {}).get("lon") is not None:
@@ -59,10 +59,13 @@ def input_data_mapper(media: dict, line: dict) -> dict:
         lon = str(line.get("indexTerms", {}).get("geopoint", {}).get("lon"))
         tmp_d["location"] = f"POINT({lon} {lat})"
 
+    if tmp_d["collection_date"] is not None:
+        tmp_d["collection_date"] = datetime.strptime('2012-01-12', '%Y-%m-%d');
+
     return tmp_d
 
 
-async def extract_data(collection):
+async def extract_data(collection: Any, page_size: int, page_offset: int):
     projection = {
         "uuid": 1,
         "media.uuid": 1,
@@ -82,10 +85,12 @@ async def extract_data(collection):
         "indexTerms.geopoint": 1,
         "indexTerms.earliestepochorlowestseries": 1,
         "indexTerms.earliestageorloweststage": 1,
+        "indexTerms.datecollected": 1
     }
-    cursor = collection.find({}, projection)
+    # // For sake of efficency, make sure sort is on an indexed field, otherwise skip will become very slow
+    cursor = collection.find({}, projection).sort({ "_id": 1 }).skip(page_offset * page_size).limit(page_size)
     new_lines = []
-    for document in await cursor.to_list(length=10):
+    for document in await cursor.to_list(length=page_size):
         for media in document['media']:
             data = input_data_mapper(media, document)
             new_lines.append(data)
@@ -111,10 +116,19 @@ async def download_image_and_preprocess(entry: dict) -> torch.Tensor:
 
 async def vector_embedder(args: str, opts: dict) -> list[dict[Any, Any]]:
     collection = opts['mongo_collection']
-    count = await collection.count_documents({})
+    queue = opts['queue']
+    page_size = opts.get('page_size', 100)
+    page_offset = opts.get('page_offset', 0);
+
     await load_model()
 
-    mongo_records = await extract_data(collection)
+    mongo_records = await extract_data(collection, page_size, page_offset)
+
+    # Greater than or equal because we extract the nested media data from each record, so there's more than page_size mongo_records
+    if len(mongo_records) >= page_offset:
+        next_job = { 'page_size': page_size, 'page_offset': page_offset + 1 }
+        await queue.enqueue('embedder', json.dumps(next_job))
+
     batch_size=10
     num_chunks = math.ceil(len(mongo_records)/batch_size)
 

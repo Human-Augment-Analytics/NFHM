@@ -6,7 +6,6 @@ from typing import List
 
 logger = getLogger('outputs.mongo')
 
-
 async def index_to_postgres(conn: asyncpg.Connection, table: str, data: List[dict]):
     """
     Inserts data into a PostgreSQL table.
@@ -37,4 +36,5 @@ async def index_to_postgres(conn: asyncpg.Connection, table: str, data: List[dic
                 )
     except Exception as e:
         logger.error(f'Error inserting data into table {table}: {e}')
+        logger.error(f'Erring Record: {record}')
         raise e
