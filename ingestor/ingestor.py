@@ -10,10 +10,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from exceptions import StartupException
 from inputs import gbif_search
 from inputs import idigbio_search
+from inputs import vector_embedder
+
 # from outputs.json_output import dump_to_json
 from outputs import dump_to_mongo
+from outputs import index_to_postgres
+from outputs import dev_null
 from ingest_queue import RedisQueue, BaseQueue
 from worker import RedisWorker
+import asyncpg
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -32,20 +37,28 @@ class RedisSettings(BaseModel):
     username: str | None = None
     password: str | None = None
 
-
 class MongoSettings(BaseModel):
     host: str
     port: int = Field(default=27017)
     database: str = Field(default='NFHM')
     username: str | None = None
     password: str | None = None
+    input_collection: str = Field(default='idigbio')
 
+class PostgresSettings(BaseModel):
+    host: str
+    port: int = Field(default=5432)
+    database: str = Field(default='nfhm')
+    table: str = Field(default='search_records')
+    user: str | None = None
+    password: str | None = None
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter='__')
     source_queue: str
     redis: RedisSettings | None = None
     mongo: MongoSettings | None = None
+    postgres: PostgresSettings | None = None
     queue: ImportString[Type[BaseQueue]] = Field(default='ingest_queue.RedisQueue')
     input: ImportString[Callable[[Any], Any]] = Field(default='inputs.gbif_search')
     output: ImportString[Callable[[Any], Any]] = Field(default='outputs.dump_to_mongo')
@@ -64,6 +77,8 @@ class Settings(BaseSettings):
         if isinstance(data, dict):
             if data.get('output').rsplit('.')[-1] == 'dump_to_mongo':
                 assert data.get('mongo') is not None, 'MONGO__HOST must be set if using the dump_to_mongo output'
+            if data.get('output').rsplit('.')[-1] == 'index_to_postgres':
+                assert data.get('postgres') is not None, 'POSTGRES_HOST must be set if using the index_to_postgres output'
         return data
 
 
@@ -75,7 +90,8 @@ async def main():
         'queue': None,
         'input_func': settings.input,
         'output_func': settings.output,
-        'output_kwargs': {}
+        'output_kwargs': {},
+        'input_kwargs': {}
     }
 
     work_kwargs = {
@@ -87,6 +103,7 @@ async def main():
     if settings.queue.__name__ == 'RedisQueue':
         worker_kwargs['queue'] = settings.queue(**settings.redis.model_dump())
         worker_klass = RedisWorker
+        worker_kwargs['input_kwargs']['queue'] = worker_kwargs['queue']
     await worker_kwargs['queue'].healthcheck()
 
     # We're using mongo
@@ -102,7 +119,30 @@ async def main():
         _ = await mongoclient.list_database_names()
         database: AsyncIOMotorDatabase = mongoclient[settings.mongo.database]
         collection: AsyncIOMotorCollection = database[settings.source_queue]
-        worker_kwargs['output_kwargs']['collection'] = collection
+        # Some input functions need access to Mongo client for input.
+        if worker_kwargs['output_func'] == 'outputs.dump_to_mongo':
+            worker_kwargs['output_kwargs']['collection'] = collection
+        if settings.mongo.input_collection:
+            worker_kwargs['input_kwargs']['mongo_database'] = database
+            worker_kwargs['input_kwargs']['mongo_collection'] = database[settings.mongo.input_collection]
+
+    if settings.postgres:
+        conn = await asyncpg.connect(
+            host=settings.postgres.host,
+            port=settings.postgres.port,
+            database=settings.postgres.database,
+            user=settings.postgres.user,
+            password=settings.postgres.password
+        )
+        # Confirm connection
+        _ = await conn.fetch("SELECT datname FROM pg_database")
+        
+        worker_kwargs['output_kwargs']['conn'] = conn
+        worker_kwargs['output_kwargs']['table'] = settings.postgres.table
+
+    
+    # D.I. queue for the input functions
+
 
 
     # Sample worker that'll have the "source_queue" of gbif.  The source_queue is just the queue that it'll be
