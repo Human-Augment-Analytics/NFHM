@@ -44,13 +44,10 @@ services:
       POSTGRES_DB: nfhm
     command: |
       bash -c "
-        apt -y update
-        apt -y install postgresql-16-pgvector
-        apt -y install postgis
+        apt -y update && \
+        apt -y install postgresql-16-pgvector && \
+        apt -y install postgis && \
         su - postgres -c '/usr/local/bin/docker-entrypoint.sh'
-      "
-    entrypoint: |
-      bash -c "
         su - postgres -c '/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/data/'
       "
     ports:
