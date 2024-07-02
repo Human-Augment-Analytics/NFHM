@@ -105,3 +105,8 @@ Guidelines on how others can contribute to your project.
 ## License
 
 Information about the license for your project.
+
+
+## TMP
+
+SOURCE_QUEUE="embedder" INPUT="inputs.vector_embedder" OUTPUT="outputs.index_to_postgres" python ingestor/ingestor.py
