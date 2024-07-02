@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import multiprocessing
 import signal
 from typing import Any, Callable, Type
+
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pydantic import BaseModel, Field, ImportString, model_validator
@@ -58,6 +60,7 @@ class Settings(BaseSettings):
     source_queue: str
     redis: RedisSettings | None = None
     mongo: MongoSettings | None = None
+    number_of_workers: int = Field(default=multiprocessing.cpu_count())
     postgres: PostgresSettings | None = None
     queue: ImportString[Type[BaseQueue]] = Field(default='ingest_queue.RedisQueue')
     input: ImportString[Callable[[Any], Any]] = Field(default='inputs.gbif_search')
@@ -154,7 +157,7 @@ async def main():
     # Here, we're saying the output is dump_to_json and the kwargs for that is specifying the filename
     # that will be used.
     workers = [
-        worker_klass(**worker_kwargs)
+        worker_klass(**worker_kwargs) for i in range(settings.number_of_workers + 1)
     ]
 
     # Create the async tasks which is the work function for the worker.
