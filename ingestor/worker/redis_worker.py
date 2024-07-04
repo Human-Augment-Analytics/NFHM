@@ -41,10 +41,10 @@ class RedisWorker(Worker):
                     try:
                         if asyncio.iscoroutinefunction(self.output):
                             print(self.output_kwargs)
-                            await self.output(**self.output_kwargs, data=results)
+                            await self.output(results, **self.output_kwargs)
                         else:
                             print(self.output_kwargs)
-                            self.output(**self.output_kwargs, data=results)
+                            self.output(results, **self.output_kwargs)
                     except Exception as e:
                         logger.error(f'Error processing the output function: {e}')
                         raise e

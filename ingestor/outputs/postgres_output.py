@@ -2,11 +2,10 @@
 
 import asyncpg
 from logging import getLogger
-from typing import List
 
 logger = getLogger('outputs.mongo')
 
-async def index_to_postgres(conn: asyncpg.Connection, table: str, data: List[dict]):
+async def index_to_postgres(data: list[dict], conn: asyncpg.Connection, table: str, **kwargs):
     """
     Inserts data into a PostgreSQL table.
 
