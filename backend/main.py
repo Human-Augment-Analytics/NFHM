@@ -10,12 +10,12 @@ app = FastAPI()
 
 app.include_router(search_router, prefix="/api")
 
-app.mount("/static", StaticFiles(directory="../frontend/static"), name="static")
+app.mount("/static", StaticFiles(directory="../NFHM/frontend/static"), name="static")
 
 @app.get("/")
 def hello_api():
     # return {"msg":"Hello FastAPI🚀"}
-    return FileResponse('../frontend/index.html')
+    return FileResponse('../NFHM/frontend/index.html')
 
 def healthcheck():
     return {"status": "running", "now": datetime.now()}
