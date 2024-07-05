@@ -28,10 +28,13 @@ async def load_model():
     Loading the model is a slow operation that breaks ingestor.py when done at the top level upon import
     """
     global model, preprocess, tokenizer
-    model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-    model.eval()  # model in train mode by default, impacts some models with BatchNorm or stochastic depth active
-    tokenizer = open_clip.get_tokenizer('ViT-B-32')
-    logger.info("Model loaded")
+    if model is not None:
+        model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+        model.eval()  # model in train mode by default, impacts some models with BatchNorm or stochastic depth active
+        tokenizer = open_clip.get_tokenizer('ViT-B-32')
+        logger.info("Model loaded")
+    else:
+        logger.info("Model loaded already")
 
 def input_data_mapper(media: dict, line: dict) -> dict:
     tmp_d = {
@@ -100,6 +103,7 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
 async def download_image_and_preprocess(entry: dict) -> torch.Tensor:
     """This method downloads an image asynchronously and outputs its vector in memory"""
     image_location = entry['media_location']
+
     async with aiohttp.ClientSession() as session:
         async with session.get(image_location) as response:
             try: 
@@ -118,7 +122,7 @@ async def vector_embedder(args: str, opts: dict) -> list[dict[Any, Any]]:
     collection = opts['mongo_collection']
     queue = opts['queue']
     page_size = opts.get('page_size', 100)
-    page_offset = opts.get('page_offset', 0);
+    page_offset = opts.get('page_offset', 0)
 
     await load_model()
 

@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import multiprocessing
 import signal
 from typing import Any, Callable, Type
+
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pydantic import BaseModel, Field, ImportString, model_validator
@@ -10,7 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from exceptions import StartupException
 from inputs import gbif_search
 from inputs import idigbio_search
-from inputs import vector_embedder
+from inputs import vector_embedder, load_model
 
 # from outputs.json_output import dump_to_json
 from outputs import dump_to_mongo
@@ -58,6 +60,7 @@ class Settings(BaseSettings):
     source_queue: str
     redis: RedisSettings | None = None
     mongo: MongoSettings | None = None
+    number_of_workers: int = Field(default=multiprocessing.cpu_count())
     postgres: PostgresSettings | None = None
     queue: ImportString[Type[BaseQueue]] = Field(default='ingest_queue.RedisQueue')
     input: ImportString[Callable[[Any], Any]] = Field(default='inputs.gbif_search')
@@ -86,6 +89,7 @@ settings = Settings()
 
 
 async def main():
+    logger.info(settings.model_dump_json())
     worker_kwargs = {
         'queue': None,
         'input_func': settings.input,
@@ -97,6 +101,9 @@ async def main():
     work_kwargs = {
         'source_queue': settings.source_queue
     }
+
+    if settings.input.__name__ == 'vector_embedder':
+        await load_model()
 
     worker_klass = None
     # Setup the redis queue and wait for the healthcheck
@@ -120,7 +127,7 @@ async def main():
         database: AsyncIOMotorDatabase = mongoclient[settings.mongo.database]
         collection: AsyncIOMotorCollection = database[settings.source_queue]
         # Some input functions need access to Mongo client for input.
-        if worker_kwargs['output_func'] == 'outputs.dump_to_mongo':
+        if worker_kwargs['output_func'].__name__ == 'dump_to_mongo':
             worker_kwargs['output_kwargs']['collection'] = collection
         if settings.mongo.input_collection:
             worker_kwargs['input_kwargs']['mongo_database'] = database
@@ -154,7 +161,7 @@ async def main():
     # Here, we're saying the output is dump_to_json and the kwargs for that is specifying the filename
     # that will be used.
     workers = [
-        worker_klass(**worker_kwargs)
+        worker_klass(**worker_kwargs) for i in range(settings.number_of_workers + 1)
     ]
 
     # Create the async tasks which is the work function for the worker.
