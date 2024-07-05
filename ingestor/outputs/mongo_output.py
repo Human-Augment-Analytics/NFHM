@@ -5,7 +5,7 @@ from pymongo import UpdateOne
 logger = getLogger('outputs.mongo')
 
 async def dump_to_mongo(data, collection: Collection = None, **kwargs):
-    if not collection:
+    if collection is None:
         raise Exception()
     bulk_write_data = []
     for datum in data:

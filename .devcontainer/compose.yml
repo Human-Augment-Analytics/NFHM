@@ -59,7 +59,7 @@ services:
     networks:
       - default
     volumes:
-      - mongodb-data:/data/db
+      - ~/.nfhm_mongo/data/db:/data/db
     ports:
       - 27018:27017
     environment:
@@ -97,5 +97,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  mongodb-data:
   

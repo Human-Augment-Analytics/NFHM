@@ -28,13 +28,13 @@ async def load_model():
     Loading the model is a slow operation that breaks ingestor.py when done at the top level upon import
     """
     global model, preprocess, tokenizer
-    if model is not None:
-        model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-        model.eval()  # model in train mode by default, impacts some models with BatchNorm or stochastic depth active
-        tokenizer = open_clip.get_tokenizer('ViT-B-32')
-        logger.info("Model loaded")
-    else:
-        logger.info("Model loaded already")
+    # if model is not None:
+    model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+    model.eval()  # model in train mode by default, impacts some models with BatchNorm or stochastic depth active
+    tokenizer = open_clip.get_tokenizer('ViT-B-32')
+    logger.info("Model loaded")
+    # else:
+        # logger.info("Model loaded already")
 
 def input_data_mapper(media: dict, line: dict) -> dict:
     tmp_d = {
@@ -107,11 +107,22 @@ async def download_image_and_preprocess(entry: dict) -> torch.Tensor:
     async with aiohttp.ClientSession() as session:
         async with session.get(image_location) as response:
             try: 
-                content = await response.read()
-                img = Image.open(BytesIO(content))
-                image = preprocess(img).unsqueeze(0)
-                vector = model.encode_image(image)
-            except:
+                if response.status == 200:
+                    content = await response.read()
+                    logger.debug(f"Downloaded image from {image_location}")
+                    img = Image.open(BytesIO(content))
+                    print(img)
+                    # logger.debug(f'Preprocess = {preprocess}')
+                    logger.debug(f"Opened image from {image_location}")
+                    image = preprocess(img).unsqueeze(0)
+                    logger.debug(f"Preprocessed image from {image_location}")
+                    vector = model.encode_image(image)
+                    logger.debug(f"Encoded image from {image_location}")
+                else:
+                    logger.error(f"Failed to download image from {image_location}. Status code: {response.status}")
+                    vector = None
+            except Exception as e:
+                logger.error(e)
                 logger.error(f"Error downloading image from {image_location}")
                 vector = None
             entry['tensor_embedding'] = vector
@@ -119,57 +130,52 @@ async def download_image_and_preprocess(entry: dict) -> torch.Tensor:
 
 
 async def vector_embedder(args: str, opts: dict) -> list[dict[Any, Any]]:
-    collection = opts['mongo_collection']
-    queue = opts['queue']
-    page_size = opts.get('page_size', 100)
-    page_offset = opts.get('page_offset', 0)
+    try:
+        params = json.loads(args)
+        collection = opts['mongo_collection']
+        queue = opts['queue']
+        page_size = params.get('page_size', 100)
+        page_offset = params.get('page_offset', 0)
 
-    await load_model()
+        await load_model()
 
-    mongo_records = await extract_data(collection, page_size, page_offset)
+        mongo_records = await extract_data(collection, page_size, page_offset)
 
-    # Greater than or equal because we extract the nested media data from each record, so there's more than page_size mongo_records
-    if len(mongo_records) >= page_offset:
-        next_job = { 'page_size': page_size, 'page_offset': page_offset + 1 }
-        await queue.enqueue('embedder', json.dumps(next_job))
+        # Greater than or equal because we extract the nested media data from each record, so there's more possibly than page_size mongo_records
+        if len(mongo_records) >= page_offset:
+            next_job = { 'page_size': page_size, 'page_offset': page_offset + 1 }
+            await queue.enqueue('embedder', json.dumps(next_job))
 
-    batch_size=10
-    num_chunks = math.ceil(len(mongo_records)/batch_size)
+        batch_size=10
+        num_chunks = math.ceil(len(mongo_records)/batch_size)
 
-    results = []
-    for chunk in np.array_split(mongo_records, num_chunks):
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            loop = asyncio.get_running_loop()
-            # Wrap download_image_and_preprocess with asyncio.run_coroutine_threadsafe
-            tasks = [loop.run_in_executor(executor, lambda entry=entry: asyncio.run_coroutine_threadsafe(download_image_and_preprocess(entry), loop).result()) for entry in chunk]
-            entries_with_embeddings = await asyncio.gather(*tasks)
-            # downloaded_images = list(executor.map(download_image_and_preprocess, chunk))
+        results = []
+        for chunk in np.array_split(mongo_records, num_chunks):
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                loop = asyncio.get_running_loop()
+                # Wrap download_image_and_preprocess with asyncio.run_coroutine_threadsafe
+                tasks = [loop.run_in_executor(executor, lambda entry=entry: asyncio.run_coroutine_threadsafe(download_image_and_preprocess(entry), loop).result()) for entry in chunk]
+                entries_with_embeddings = await asyncio.gather(*tasks)
+                # downloaded_images = list(executor.map(download_image_and_preprocess, chunk))
 
-            # downloaded_images = executor.map(download_image_and_preprocess, entry)
-            for _i, record in enumerate(entries_with_embeddings):
-                image = record['tensor_embedding']
-                try:
-                    if image is not None and image.numel() > 0:
-                        row = torch.nn.functional.normalize(image)
-                        row = row.detach().numpy().tolist()[0]
-                        vector = json.dumps(row)
+                # downloaded_images = executor.map(download_image_and_preprocess, entry)
+                for _i, record in enumerate(entries_with_embeddings):
+                    image = record['tensor_embedding']
+                    try:
+                        if image is not None and image.numel() > 0:
+                            row = torch.nn.functional.normalize(image)
+                            row = row.detach().numpy().tolist()[0]
+                            vector = json.dumps(row)
 
-                        record['embedding'] = vector
-                        results.append(record)
-                    else:
-                        logger.error("{}: No vector for image".format(record['media_location']))
-                except Exception as e:
-                    logger.error(e)
-            
-    return results
+                            record['embedding'] = vector
+                            results.append(record)
+                        else:
+                            logger.error("{}: No vector for image".format(record['media_location']))
+                    except Exception as e:
+                        logger.error(e)
 
-
-
-
-        # TODO:
-        # - For each media sub-document, download the media blob
-        # - Extract the vector embeddings from the media blob and/or whatever text data
-        # - (Port over logic from:
-        # -   https://github.com/Human-Augment-Analytics/NFHM/blob/main/jupyter-workpad/thomas_scratchpad/mongo_embedding_basic_experiment_one.ipynb 
-        # -   and https://github.com/Human-Augment-Analytics/Higher-Ed/blob/main/Personal%20Folders/egrossman/Week%205%20Code%20Submission%20(06.10.24)/vector_search.ipynb
-        # - increment the page offset and add next page to queue
+        logger.info(f"Finished processing {len(results)}")
+        return results
+    except Exception as e:
+        logger.error(e)
+        logger.error("Encountered an error in vector_embedder")

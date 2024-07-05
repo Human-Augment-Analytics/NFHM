@@ -12,7 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from exceptions import StartupException
 from inputs import gbif_search
 from inputs import idigbio_search
-from inputs import vector_embedder, load_model
+from inputs import vector_embedder
 
 # from outputs.json_output import dump_to_json
 from outputs import dump_to_mongo
@@ -60,7 +60,8 @@ class Settings(BaseSettings):
     source_queue: str
     redis: RedisSettings | None = None
     mongo: MongoSettings | None = None
-    number_of_workers: int = Field(default=multiprocessing.cpu_count())
+    # number_of_workers: int = Field(default=multiprocessing.cpu_count())
+    number_of_workers: int = Field(default=1)
     postgres: PostgresSettings | None = None
     queue: ImportString[Type[BaseQueue]] = Field(default='ingest_queue.RedisQueue')
     input: ImportString[Callable[[Any], Any]] = Field(default='inputs.gbif_search')
@@ -102,8 +103,8 @@ async def main():
         'source_queue': settings.source_queue
     }
 
-    if settings.input.__name__ == 'vector_embedder':
-        await load_model()
+    # if settings.input.__name__ == 'vector_embedder':
+    #     await load_model()
 
     worker_klass = None
     # Setup the redis queue and wait for the healthcheck

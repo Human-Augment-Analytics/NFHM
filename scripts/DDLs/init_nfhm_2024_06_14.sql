@@ -34,3 +34,6 @@ CREATE TABLE search_records (
     embedding VECTOR  -- PGVector extension for storing vector data
 );
 
+
+CREATE UNIQUE INDEX idx_unique_media_uuid ON search_records (media_uuid);
+
