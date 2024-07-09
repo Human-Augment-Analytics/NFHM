@@ -4,7 +4,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException
 
-from ..models.record import Record
+from models.record import Record
 
 file_path = os.path.join(os.path.dirname(__file__), "record_sample.json")
 with open(file_path) as file:
