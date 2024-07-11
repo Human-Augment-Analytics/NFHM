@@ -13,13 +13,20 @@ import json
 import torch
 import open_clip
 from datetime import datetime
-
+from bson.objectid import ObjectId
 
 logger = getLogger('vector_embedder')
 
 model = None
 preprocess = None
 tokenizer = None
+device = None
+
+if torch.backends.mps.is_available():
+    device = torch.device("mps:0")
+    logger.info("Using MPS")
+else:
+    device = torch.device("cpu")
 
 async def load_model():
     """
@@ -27,9 +34,10 @@ async def load_model():
     This is lazily evaluated once when the first call to vector_embedder is made.
     Loading the model is a slow operation that breaks ingestor.py when done at the top level upon import
     """
-    global model, preprocess, tokenizer
+    global model, preprocess, tokenizer, device
     # if model is not None:
-    model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+    model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k', device=device)
+    model.to(device)
     model.eval()  # model in train mode by default, impacts some models with BatchNorm or stochastic depth active
     tokenizer = open_clip.get_tokenizer('ViT-B-32')
     logger.info("Model loaded")
@@ -38,9 +46,9 @@ async def load_model():
 
 def input_data_mapper(media: dict, line: dict) -> dict:
     tmp_d = {
-        "uuid": line.get("uuid"),
+        "specimen_uuid": line.get("uuid"),
         "scientific_name": line.get("data", {}).get("dwc:scientificName") or line.get("data", {}).get("dwc:genus"),
-        "media_location": media.get("data", {}).get("ac:accessURI"),
+        "external_media_uri": media.get("data", {}).get("ac:accessURI"),
         "media_uuid": media.get("uuid"),
         "catalog_number": line.get("data", {}).get("dwc:catalogNumber"),
         "recorded_by": line.get("data", {}).get("dwc:recordedBy"),
@@ -52,8 +60,8 @@ def input_data_mapper(media: dict, line: dict) -> dict:
         "tax_genus": line.get("data", {}).get("dwc:genus"),
         "common_name": line.get("indexTerms", {}).get("commonname"),
         "higher_taxon": line.get("indexTerms", {}).get("highertaxon"),
-        "earliest_epoch_or_lowest_series": line.get("indexTerms", {}).get("earliestepochorlowestseries"),
-        "earliest_age_or_lowest_stage": line.get("indexTerms", {}).get("earliestageorloweststage"),
+        "earliest_epoch_or_lowest_series": line.get("indexTerms", {}).get("earliestepochorlowestseries") or line.get("data", {}).get("dwc:earliestEpochOrLowestSeries"),
+        "earliest_age_or_lowest_stage": line.get("indexTerms", {}).get("earliestageorloweststage") or line.get("data", {}).get("dwc:dwc:earliestAgeOrLowestStage"),
         "collection_date": line.get("indexTerms", {}).get("datecollected")
     }
 
@@ -90,8 +98,12 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
         "indexTerms.earliestageorloweststage": 1,
         "indexTerms.datecollected": 1
     }
+
+
+    query = {"_id": {"$gt": ObjectId("66882105ffdc56ce50b5f5f2") }}
+    # query = {}
     # // For sake of efficency, make sure sort is on an indexed field, otherwise skip will become very slow
-    cursor = collection.find({}, projection).sort({ "_id": 1 }).skip(page_offset * page_size).limit(page_size)
+    cursor = collection.find(query, projection).sort({ "_id": 1 }).skip(page_offset * page_size).limit(page_size)
     new_lines = []
     for document in await cursor.to_list(length=page_size):
         for media in document['media']:
@@ -102,21 +114,20 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
 
 async def download_image_and_preprocess(entry: dict) -> torch.Tensor:
     """This method downloads an image asynchronously and outputs its vector in memory"""
-    image_location = entry['media_location']
+    image_location = entry['external_media_uri']
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(image_location) as response:
+        async with session.get(image_location, allow_redirects=True) as response:
             try: 
-                if response.status == 200:
+                if response.status < 400:
                     content = await response.read()
                     logger.debug(f"Downloaded image from {image_location}")
                     img = Image.open(BytesIO(content))
-                    print(img)
-                    # logger.debug(f'Preprocess = {preprocess}')
                     logger.debug(f"Opened image from {image_location}")
-                    image = preprocess(img).unsqueeze(0)
+                    image = preprocess(img).unsqueeze(0).to(device)
                     logger.debug(f"Preprocessed image from {image_location}")
                     vector = model.encode_image(image)
+                    vector = vector.cpu()
                     logger.debug(f"Encoded image from {image_location}")
                 else:
                     logger.error(f"Failed to download image from {image_location}. Status code: {response.status}")
@@ -137,7 +148,8 @@ async def vector_embedder(args: str, opts: dict) -> list[dict[Any, Any]]:
         page_size = params.get('page_size', 100)
         page_offset = params.get('page_offset', 0)
 
-        await load_model()
+        if model is None:
+            await load_model()
 
         mongo_records = await extract_data(collection, page_size, page_offset)
 
@@ -151,28 +163,54 @@ async def vector_embedder(args: str, opts: dict) -> list[dict[Any, Any]]:
 
         results = []
         for chunk in np.array_split(mongo_records, num_chunks):
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                loop = asyncio.get_running_loop()
-                # Wrap download_image_and_preprocess with asyncio.run_coroutine_threadsafe
-                tasks = [loop.run_in_executor(executor, lambda entry=entry: asyncio.run_coroutine_threadsafe(download_image_and_preprocess(entry), loop).result()) for entry in chunk]
-                entries_with_embeddings = await asyncio.gather(*tasks)
-                # downloaded_images = list(executor.map(download_image_and_preprocess, chunk))
+            # MULTITHREADED
+            # with ThreadPoolExecutor(max_workers=3) as executor:
+            #     loop = asyncio.get_running_loop()
+            #     # Wrap download_image_and_preprocess with asyncio.run_coroutine_threadsafe
+            #     tasks = [loop.run_in_executor(executor, lambda entry=entry: asyncio.run_coroutine_threadsafe(download_image_and_preprocess(entry), loop).result()) for entry in chunk]
+            #     entries_with_embeddings = await asyncio.gather(*tasks)
+            #     # downloaded_images = list(executor.map(download_image_and_preprocess, chunk))
 
-                # downloaded_images = executor.map(download_image_and_preprocess, entry)
-                for _i, record in enumerate(entries_with_embeddings):
-                    image = record['tensor_embedding']
-                    try:
-                        if image is not None and image.numel() > 0:
-                            row = torch.nn.functional.normalize(image)
-                            row = row.detach().numpy().tolist()[0]
-                            vector = json.dumps(row)
+            #     # downloaded_images = executor.map(download_image_and_preprocess, entry)
+            #     for _i, record in enumerate(entries_with_embeddings):
+            #         image = record['tensor_embedding']
+            #         try:
+            #             if image is not None and image.numel() > 0:
+            #                 row = torch.nn.functional.normalize(image)
+            #                 row = row.detach().numpy().tolist()[0]
+            #                 vector = json.dumps(row)
 
-                            record['embedding'] = vector
-                            results.append(record)
-                        else:
-                            logger.error("{}: No vector for image".format(record['media_location']))
-                    except Exception as e:
-                        logger.error(e)
+            #                 record['embedding'] = vector
+            #                 results.append(record)
+            #             else:
+            #                 logger.error("{}: No vector for image".format(record['media_location']))
+            #         except Exception as e:
+            #             logger.error(e)
+
+
+            # SINGLE THREADED
+            tasks = [download_image_and_preprocess(entry) for entry in chunk]
+
+            entries_with_embeddings = await asyncio.gather(*tasks)
+            # downloaded_images = list(executor.map(download_image_and_preprocess, chunk))
+
+            # downloaded_images = executor.map(download_image_and_preprocess, entry)
+            for _i, record in enumerate(entries_with_embeddings):
+                image = record['tensor_embedding']
+                try:
+                    if image is not None and image.numel() > 0:
+                        image = image.cpu()
+                        row = torch.nn.functional.normalize(image)
+                        row = row.detach().numpy().tolist()[0]
+                        vector = json.dumps(row)
+
+                        record['embedding'] = vector
+                        results.append(record)
+                    else:
+                        logger.error("{}: No vector for image".format(record['external_media_uri']))
+                except Exception as e:
+                    logger.error(e)
+
 
         logger.info(f"Finished processing {len(results)}")
         return results
