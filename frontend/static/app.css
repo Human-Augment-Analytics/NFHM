@@ -37,7 +37,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin: 40px 20px 0 20px;
+  margin:px 20px 0 20px;
   z-index: 1;
 }
 
@@ -46,10 +46,17 @@ body {
   padding-bottom: 50px;
 }
 
+.bannerimage {
+  width: 100%;
+  background-image: url('banner_alt.jpg');
+  height: 405px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .container .heading h3 {
   font-size: 3em;
   font-weight: bolder;
-  border-bottom: 3px solid var(--separator-color);
   padding-bottom: 10px;
   color: var(--fallback-s, oklch(var(--p) / 1));
 }
@@ -60,12 +67,11 @@ body {
 }
 
 .container .heading .inp-button {
-  border-bottom: 3px solid var(--separator-color);
   padding-bottom: 25px;
 }
 
 .container .heading .inp-button p {
-  padding-top: 4px;
+  padding-top: 10px;
 }
 
 .container .heading .inp-button .inputs {
@@ -88,20 +94,35 @@ body {
   width: 150px;
 }
 
-.container .heading .inp-button .inputs .mag {
-  left: 7.6rem;
-  bottom: 1rem;
-  position: absolute;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
 .container .heading .inp-button .inputs .custom-file-upload {
   position: absolute;
   cursor: pointer;
-  right: 7.6rem;
-  bottom: 0.8rem;
+  transform: translate(-200%, 50%);
 }
+
+#magglass {
+  position: relative;
+}
+
+#magglass::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: url("mag.svg") center / contain no-repeat;
+}
+
+/* .container .heading .inp-button .inputs label::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: url("image.png") center / contain no-repeat;
+} */
 
 .container .heading .inp-button .inputs .search-query {
   padding-left: 3rem;
@@ -211,3 +232,5 @@ body {
   object-fit: fill;
   border-radius: 1rem;
 }
+
+
