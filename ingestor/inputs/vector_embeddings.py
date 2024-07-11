@@ -1,3 +1,4 @@
+import traceback
 import math
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
@@ -48,7 +49,7 @@ def input_data_mapper(media: dict, line: dict) -> dict:
     tmp_d = {
         "specimen_uuid": line.get("uuid"),
         "scientific_name": line.get("data", {}).get("dwc:scientificName") or line.get("data", {}).get("dwc:genus"),
-        "external_media_uri": media.get("data", {}).get("ac:accessURI"),
+        "external_media_uri": media.get("data", {}).get("ac:accessURI") or media.get("indexTerms", {}).get("accessuri"),
         "media_uuid": media.get("uuid"),
         "catalog_number": line.get("data", {}).get("dwc:catalogNumber"),
         "recorded_by": line.get("data", {}).get("dwc:recordedBy"),
@@ -81,6 +82,7 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
         "uuid": 1,
         "media.uuid": 1,
         "media.data": 1,
+        "media.indexTerms": 1,
         "media.ac:accessURI": 1,
         "data.dwc:scientificName":  1,
         "data.dwc:genus": 1,
@@ -100,7 +102,8 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
     }
 
 
-    query = {"_id": {"$gt": ObjectId("66882105ffdc56ce50b5f5f2") }}
+    # query = {"_id": {"$gt": ObjectId("66882105ffdc56ce50b5f5f2") }}
+    query = {"_id": {"$gt": ObjectId("66882305ffdc56ce50b64652") }}
     # query = {}
     # // For sake of efficency, make sure sort is on an indexed field, otherwise skip will become very slow
     cursor = collection.find(query, projection).sort({ "_id": 1 }).skip(page_offset * page_size).limit(page_size)
@@ -115,6 +118,10 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
 async def download_image_and_preprocess(entry: dict) -> torch.Tensor:
     """This method downloads an image asynchronously and outputs its vector in memory"""
     image_location = entry['external_media_uri']
+
+    # import pprint
+    # pprint.pp(entry)
+    logger.info("Begin downloading image from {}".format(entry))
 
     async with aiohttp.ClientSession() as session:
         async with session.get(image_location, allow_redirects=True) as response:
@@ -215,5 +222,6 @@ async def vector_embedder(args: str, opts: dict) -> list[dict[Any, Any]]:
         logger.info(f"Finished processing {len(results)}")
         return results
     except Exception as e:
+        traceback.print_exc()
         logger.error(e)
         logger.error("Encountered an error in vector_embedder")
