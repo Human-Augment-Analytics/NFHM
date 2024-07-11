@@ -49,7 +49,7 @@ body {
 .bannerimage {
   width: 100%;
   background-image: url('banner_alt.jpg');
-  height: 405px;
+  height: 300px;
   background-position: center;
   background-repeat: no-repeat;
 }
