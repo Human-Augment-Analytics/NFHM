@@ -1,6 +1,7 @@
 fastapi
 fastapi-cli
 uvicorn
+gunicorn
 pydantic
 python-multipart
 sqlmodel

@@ -1,0 +1,72 @@
+services:
+  redis-to-mongo:
+    image: nfhm/ingestor
+    build: ../ingestor
+    environment:
+      REDIS__HOST: ${REDIS_HOST:-redis}
+      REDIS__PORT: ${REDIS_HOST:-6379}
+      REDIS__USERNAME: ${REDIS_USERNAME:-}
+      REDIS__PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS__DATABASE: ${REDIS_DATABASE:-0}
+      MONGO__HOST: ${MONGO_HOST:-mongo}
+      MONGO__USERNAME: ${MONGO_USERNAME:-root}
+      MONGO__PASSWORD: ${MONGO_PASSWORD:-example}
+      MONGO__DATABASE: ${MONGO_DATABASE:-NHFM}
+      QUEUE: ${QUEUE_TECH:-ingest_queue.RedisQueue}
+      SOURCE_QUEUE: ${SOURCE_QUEUE:-idigbio}
+      INPUT: inputs.idigbio_search
+      OUTPUT: outputs.dump_to_mongo
+
+  vector-embedder:
+    image: nfhm/ingestor
+    build: ../ingestor
+    environment:
+      REDIS__HOST: ${REDIS_HOST:-redis}
+      REDIS__PORT: ${REDIS_HOST:-6379}
+      REDIS__USERNAME: ${REDIS_USERNAME:-}
+      REDIS__PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS__DATABASE: ${REDIS_DATABASE:-0}
+      MONGO__HOST: ${MONGO_HOST:-mongo}
+      MONGO__USERNAME: ${MONGO_USERNAME:-root}
+      MONGO__PASSWORD: ${MONGO_PASSWORD:-example}
+      MONGO__DATABASE: ${MONGO_DATABASE:-NHFM}
+      POSTGRES__HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES__PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES__DATABASE: ${POSTGRES_DATABASE:-nfhm}
+      POSTGRES__TABLE: ${POSTGRES_TABLE:-search_records}
+      POSTGRES__USER: ${POSTGRES_USER:-postgres}
+      POSTGRES__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      QUEUE: ${QUEUE_TECH:-ingest_queue.RedisQueue}
+      SOURCE_QUEUE: ${SOURCE_QUEUE:-idigbio}
+      INPUT: inputs.vector_embedder
+      OUTPUT: outputs.index_to_postgres
+    # Uncomment below in order to utilize nvidia GPU with the ingestor
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  backend:
+    image: nfhm/backend-api
+    build: ../backend
+    networks:
+      - frontend
+
+  nginx:
+    image: nfhm/nginx
+    build: ../frontend
+    ports:
+      - 8000:80
+    networks:
+      - frontend
+      
+volumes:
+  postgres-data:
+  redis-data:
+  mongodb-data:
+
+networks:
+  frontend:

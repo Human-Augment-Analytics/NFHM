@@ -12,6 +12,7 @@
     <script src="static/sweetalert2.all.min.js"></script>
     <script src="static/app.js" defer></script>
     <title>BioCosmos</title>
+    <link rel="shortcut icon" type="image/jpg" href="static/favicon256.jpg" />
 </head>
 
 <body>
@@ -65,21 +66,17 @@
                 </div>
             </div>
         </div>
+        <div class="bannerimage"></div>
         <div class="container">
             <div class="heading">
-                <h3>Bio<span>Cosmos</span></h3>
                 <div class="inp-button">
                     <div class="inputs">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="14" width="14" viewBox="0 0 512 512"
-                            class="mag">
-                            <!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.
-                            -->
-                            <path fill="#a3a3a3"
-                                d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
-                        </svg>
-                        <input type="text" placeholder="Search" name="searchQuery" id="searchQuery"
-                            class="search-query input input-bordered input-primary" :value="inputQuery"
-                            @input="searchQueryChanged" />
+                        <label id="magglass">
+                            <input type="text" placeholder="Search" name="searchQuery" id="searchQuery"
+                                class="search-query input input-bordered input-primary" :value="inputQuery"
+                                @input="searchQueryChanged" />
+                        </label>
+
 
                         <label for="fileUpload" class="custom-file-upload">
                             <img
@@ -87,6 +84,7 @@
                         </label>
                         <input type="file" class="hidden" name="fileUpload" id="fileUpload" @change="uploadFileChanged"
                             ref="fileUploadElement" accept="image/*" />
+
                     </div>
                     <div class="buttons">
                         <button class="btn btn-primary" @click="submitQuery">

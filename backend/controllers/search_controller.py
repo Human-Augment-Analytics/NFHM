@@ -13,6 +13,13 @@ from PIL import Image
 import io
 from ..models.search_record import SearchRecord
 
+
+# from models.record import Record
+
+# # file_path = os.path.join(os.path.dirname(__file__), "record_sample.json")
+# # with open(file_path) as file:
+# #     sample_data = json.load(file)
+
 router = APIRouter()
 
 DATABASE_URL = "postgresql+asyncpg://postgres:postgres@postgres/nfhm"
@@ -22,8 +29,13 @@ async def get_session():
     async with AsyncSession(engine) as session:
         yield session
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+# device = "cuda" if torch.cuda.is_available() else "cpu"
+if torch.backends.mps.is_available():
+    device = torch.device("mps:0")
+    print("Using MPS")
+else:
+    device = torch.device("cpu")
+model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k', device=device)
 model = model.to(device)
 tokenizer = open_clip.get_tokenizer('ViT-B-32')
 
@@ -32,7 +44,7 @@ tokenizer = open_clip.get_tokenizer('ViT-B-32')
 async def search(
     search_param: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
-    limit=10,
+    limit=30,
     session: AsyncSession = Depends(get_session)):
     # For demonstration purposes, we'll just return the search_param and filename
 
@@ -67,8 +79,8 @@ async def search(
     func.l2_distance(
         SearchRecord.embedding,
         cast(search_vector, Vector)
-    )
-).limit(limit)
+        )
+    ).limit(limit)
 
     # Execute the query
     results = await session.exec(query)
