@@ -1,10 +1,13 @@
-from sqlmodel import Field, SQLModel
 from datetime import date
-from uuid import UUID
 from typing import Optional
-from sqlalchemy import Column
+from uuid import UUID
+
 from geoalchemy2 import Geography
+from geoalchemy2.shape import to_shape
+from pydantic import computed_field
 from pgvector.sqlalchemy import Vector
+from sqlmodel import Field, SQLModel
+from sqlalchemy import Column
 # from sqlalchemy import ARRAY, Float
 
 
@@ -35,3 +38,11 @@ class SearchRecord(SQLModel, table=True):
 
     class Config:
         arbitrary_types_allowed = True
+
+    @computed_field
+    @property
+    def to_lat_long(self) -> dict[str, float]:
+        if self.location:
+            point = to_shape(self.location)
+            return {'latitude': point.y, 'longitude': point.x}
+        return {}

@@ -8,6 +8,7 @@ from typing import Any, Awaitable, Callable
 MessageProcessFunc = Callable[[str, dict], Awaitable[None]]
 logger = getLogger('worker.redis')
 
+
 class RedisWorker(Worker):
     def __init__(self, queue: RedisQueue, input_func: MessageProcessFunc, output_func: MessageProcessFunc | None = None, input_kwargs: dict[Any, Any] = {}, output_kwargs: dict[Any, Any] = {}, timeout: int | None = 10):
         self.queue = queue
@@ -47,7 +48,6 @@ class RedisWorker(Worker):
                             self.output(results, **self.output_kwargs)
                     except Exception as e:
                         logger.error(f'Error processing the output function: {e}')
-                        raise e
                     # logger.info(f'Queueing the results to {ingest_queue}')
                     # with open('test.json', 'w+') as outfile:
                     #     import json
