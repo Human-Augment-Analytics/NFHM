@@ -1,0 +1,117 @@
+services:
+  redis:
+    image: redis/redis-stack:7.2.0-v10
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      - ${REDIS_DATA_DIR-redis-data}:/data/redis
+    ports:
+      - 8002:8001
+
+  postgres:
+    image: nfhm/pgvector
+    build: ../postgres
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      - ${POSTGRES_DATA_DIR-postgres-data}:/var/lib/postgresql/data
+      - ../postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nfhm
+
+  mongo:
+    image: mongo:latest
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      - ${MONGODB_DATA_DIR-mongodb-data}:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: NFHM
+
+  redis-to-mongo:
+    image: nfhm/ingestor
+    build: ../ingestor
+    environment:
+      REDIS__HOST: ${REDIS_HOST:-redis}
+      REDIS__PORT: ${REDIS_HOST:-6379}
+      REDIS__USERNAME: ${REDIS_USERNAME:-}
+      REDIS__PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS__DATABASE: ${REDIS_DATABASE:-0}
+      MONGO__HOST: ${MONGO_HOST:-mongo}
+      MONGO__USERNAME: ${MONGO_USERNAME:-root}
+      MONGO__PASSWORD: ${MONGO_PASSWORD:-example}
+      MONGO__DATABASE: ${MONGO_DATABASE:-NHFM}
+      QUEUE: ${QUEUE_TECH:-ingest_queue.RedisQueue}
+      SOURCE_QUEUE: ${SOURCE_QUEUE:-idigbio}
+      INPUT: inputs.idigbio_search
+      OUTPUT: outputs.dump_to_mongo
+    depends_on:
+      - redis
+      - mongo
+
+  vector-embedder:
+    image: nfhm/ingestor
+    build: ../ingestor
+    environment:
+      REDIS__HOST: ${REDIS_HOST:-redis}
+      REDIS__PORT: ${REDIS_HOST:-6379}
+      REDIS__USERNAME: ${REDIS_USERNAME:-}
+      REDIS__PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS__DATABASE: ${REDIS_DATABASE:-0}
+      MONGO__HOST: ${MONGO_HOST:-mongo}
+      MONGO__USERNAME: ${MONGO_USERNAME:-root}
+      MONGO__PASSWORD: ${MONGO_PASSWORD:-example}
+      MONGO__DATABASE: ${MONGO_DATABASE:-NHFM}
+      POSTGRES__HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES__PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES__DATABASE: ${POSTGRES_DATABASE:-nfhm}
+      POSTGRES__TABLE: ${POSTGRES_TABLE:-search_records}
+      POSTGRES__USER: ${POSTGRES_USER:-postgres}
+      POSTGRES__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      QUEUE: ${QUEUE_TECH:-ingest_queue.RedisQueue}
+      SOURCE_QUEUE: ${SOURCE_QUEUE:-idigbio}
+      INPUT: inputs.vector_embedder
+      OUTPUT: outputs.index_to_postgres
+    depends_on:
+      - redis
+      - mongo
+      - postgres
+    # Uncomment below in order to utilize nvidia GPU with the ingestor
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  backend:
+    image: nfhm/backend-api
+    build: ../backend
+    depends_on:
+      - postgres
+    networks:
+      - frontend
+
+  nginx:
+    image: nfhm/nginx
+    build: ../frontend
+    ports:
+      - 8000:80
+    networks:
+      - frontend
+      
+volumes:
+  postgres-data:
+  redis-data:
+  mongodb-data:
+
+networks:
+  frontend:
