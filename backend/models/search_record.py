@@ -1,11 +1,12 @@
 from sqlmodel import Field, SQLModel
 from datetime import date
 from uuid import UUID
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy import Column
 from geoalchemy2 import Geography
 from pgvector.sqlalchemy import Vector
 # from sqlalchemy import ARRAY, Float
+
 
 class SearchRecord(SQLModel, table=True):
     __tablename__ = "search_records"
@@ -31,8 +32,6 @@ class SearchRecord(SQLModel, table=True):
     external_media_uri: Optional[str] = Field(default=None, max_length=2083)
     embedding: Optional[list] = Field(default=None, sa_column=Column(Vector))
     # embedding: List[float] = Field(sa_column=Column(ARRAY(Float)))
-
-
 
     class Config:
         arbitrary_types_allowed = True

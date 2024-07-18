@@ -1,29 +1,22 @@
-import json
-import os
 from typing import Optional, List, Any
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException
-from sqlmodel import Field, SQLModel, Session, select
+from sqlmodel import select
 import torch
 import open_clip
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy import func, cast, ARRAY, Float
+from sqlalchemy import func, cast
 from pgvector.sqlalchemy import Vector
 from PIL import Image
 import io
-from ..models.search_record import SearchRecord
+from models.search_record import SearchRecord
 
-
-from models.record import Record
-
-# # file_path = os.path.join(os.path.dirname(__file__), "record_sample.json")
-# # with open(file_path) as file:
-# #     sample_data = json.load(file)
 
 router = APIRouter()
 
 DATABASE_URL = "postgresql+asyncpg://postgres:postgres@postgres/nfhm"
 engine = create_async_engine(DATABASE_URL, echo=True)
+
 
 async def get_session():
     async with AsyncSession(engine) as session:
@@ -45,7 +38,8 @@ async def search(
     search_param: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     limit=30,
-    session: AsyncSession = Depends(get_session)):
+    session: AsyncSession = Depends(get_session)
+):
     # For demonstration purposes, we'll just return the search_param and filename
 
     if search_param is None and image is None:
@@ -76,9 +70,9 @@ async def search(
     # ).limit(limit)
 
     query = select(SearchRecord).order_by(
-    func.l2_distance(
-        SearchRecord.embedding,
-        cast(search_vector, Vector)
+        func.l2_distance(
+            SearchRecord.embedding,
+            cast(search_vector, Vector)
         )
     ).limit(limit)
 
@@ -105,7 +99,7 @@ async def search(
         for record in records
     ]
 
-    return  {
+    return {
         "search_param": search_param,
         "filename": image and image.filename,
         "record_count": len(payload),
