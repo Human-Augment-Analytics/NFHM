@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 # .vscode.direnv/
+.vscode
+**/.DS_Store
