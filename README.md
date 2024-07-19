@@ -6,6 +6,9 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 ## Table of Contents
 
 - [Local Setup](#local-setup)
+   - [Super Quick Start](#super-quick-start)
+   - [Less Quick Start](#less-quick-start)
+   - [Least Quick Start](#least-quick-start)
 - [Seeding Mongo with Raw Data](#seeding-mongo-with-raw-data)
    - [Seeding Mongo with a sample of iDigBio data](#seeding-mongo-with-a-sample-of-idigbio-data)
    - [Seeding Mongo with a sample of GBIF data](#seeding-mongo-with-a-sample-of-gbif-data)
@@ -19,6 +22,35 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 
 ## Local Setup
 
+Docker is a prerequisite.
+
+1) Download project: `git clone git@github.com:Human-Augment-Analytics/NFHM.git NFHM`
+
+### Super Quick Start
+
+1) Open and run project in dev container with [VSCode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2) Set up postgres db with initital data: `bin/import_vector_db`
+3) Run backend API (from within the dev container): `bin/dev`
+4) 
+
+### Less Quick Start
+
+If the Super Quick Start above doesn't work (for example, you're not using a mac), then the following steps capture the essential idea.  Modify as necessary for your local computing environment.
+
+1) Open and run project in dev container with [VSCode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2) Download the sample vector database:
+   - (With Mac's `unzip`): `curl "https://drive.usercontent.google.com/download?id={17QGJ3o7rx88A51KjUije6RX_j4kV0WXr}&confirm=xxx" -o tmp.pgsql.zip && unzip tmp.pgsql.zip`
+3) Copy that file to the postgres docker container
+   - `docker ps | grep 'nfhm' | grep 'postgres'` to get container name
+   - `docker cp vector_embedder_data_only.pgsql nfhm_devcontainer-postgres-1:/tmp/import.pgsql` (Replace `nfhm_devcontainer-postgres-1` and `vector_embedder_data_only.pgsql` with container and filename, respectively, as appropriate.)
+4) Run import.
+   - `docker exec -it nfhm_devcontainer-postgres-1 bash`
+   - `psql -U postgres -d nfhm -f /tmp/import.pgsq`
+
+
+
+### Least Quick Start ()
+
 For optimal portability, this app uses [Dev Containers](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-a-dev-container-configuration/introduction-to-dev-containers) to configure and manage the development environment. This means any developer with Docker installed and an appropriate IDE (e.g., [VSCode](https://code.visualstudio.com/docs/devcontainers/containers), [GitHub Codespaces](https://docs.github.com/en/codespaces/overview), a [JetBrains IDE](https://www.jetbrains.com/help/idea/connect-to-devcontainer.html) if you like debugging) or the [Dev Container CLI](https://github.com/devcontainers/cli) should be able to get this project running locally in just a few steps.
 
 To run locally:
@@ -26,9 +58,12 @@ To run locally:
    ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/ba3aec85-a5f2-42a3-bf87-2d1f423305eb)
 
   
-2) (SUBJECT TO CHANGE): run `$ conda activate backend_api && bin/dev` to start the python backend.
+2) (SUBJECT TO CHANGE): run `$ bin/dev` to start the python backend.
 3) Visit `http://localhost:8000/`
 4) (SUBJECT TO CHANGE) Here is a mock screenshot of how you can expect the website to look:
+5) Next you'll need to import data.
+   - [Import the raw data into Mongo](#seeding-mongo-with-raw-data)
+   - [Running the vector embedder job]()
    
 ![BioCosmos Image Search](https://github.com/bharatr21/NFHM/assets/13381361/6b335845-56d2-49a8-85bf-95e06c65b9d3)
 
@@ -111,9 +146,12 @@ Information about the license for your project.
 
 ## Useful Commands
 
-pg_dump to share your database:
+
+We expect to do a lot experiments that vary the content of the DB.  Consequently, it's imperative to be able to share our _exact_ data with each other.  You can use `pg_dump` to do so:
 
 `docker exec  nfhm_devcontainer-postgres-1 bash -c "pg_dump -U postgres nfhm" > <FILE_NAME>.pgsql`
+
+And then zip it up and send.
 
 
 SOURCE_QUEUE="embedder" INPUT="inputs.vector_embedder" OUTPUT="outputs.index_to_postgres" python ingestor/ingestor.py

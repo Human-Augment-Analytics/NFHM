@@ -172,3 +172,6 @@ cython_debug/
 # .vscode.direnv/
 .vscode
 **/.DS_Store
+
+# Used by OS when we import pgsql file
+__MACOSX/
