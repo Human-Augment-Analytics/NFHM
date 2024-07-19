@@ -109,4 +109,11 @@ Information about the license for your project.
 
 ## TMP
 
+## Useful Commands
+
+pg_dump to share your database:
+
+`docker exec  nfhm_devcontainer-postgres-1 bash -c "pg_dump -U postgres nfhm" > <FILE_NAME>.pgsql`
+
+
 SOURCE_QUEUE="embedder" INPUT="inputs.vector_embedder" OUTPUT="outputs.index_to_postgres" python ingestor/ingestor.py

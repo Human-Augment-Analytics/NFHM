@@ -31,16 +31,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(search_router, prefix="/api")
 
-# from fastapi.staticfiles import StaticFiles
-# from fastapi.responses import FileResponse
-
-# app.mount("/static", StaticFiles(directory="./frontend/static"), name="static")
-
-# @app.get("/")
-# def hello_api():
-#     # return {"msg":"Hello FastAPI🚀"}
-#     return FileResponse('./frontend/index.html')
-
+@app.get("/")
 def healthcheck():
     return {"status": "running", "now": datetime.now()}
 
