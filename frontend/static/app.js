@@ -1,3 +1,29 @@
+class Result {
+  constructor(search_results) {
+    this.id = search_results.id;
+    this.media_url = search_results.media_url;
+    const url = new URL(this.media_url);
+    this.image_source_name = url.host;
+    this.latitude = search_results.latitude;
+    this.longitude = search_results.longitude;
+    this.map_url = `https://maps.google.com/?q=${this.latitude}%2C${this.longitude}`;
+    this.source_id = search_results.specimen_id;
+    this.source = search_results.source;
+
+    this.name = search_results.scientific_name;
+    this.description = search_results.description;
+
+    switch (this.source.toLowerCase()) {
+      case "idigbio":
+        this.source_link = `https://www.idigbio.org/portal/records/${search_results.specimen_id}`;
+        break;
+      default:
+        console.log("unidentified source " + search_results.source);
+        this.source_link = "#";
+    }
+  }
+}
+
 const app = Vue.createApp({
   data() {
     return {
@@ -18,10 +44,7 @@ const app = Vue.createApp({
 
       for (index in apiResult.records) {
         column_number = index % 4;
-        const item = apiResult.records[index];
-        const url = new URL(item.media_url);
-        item.map_url = `https://maps.google.com/?q=${item.latitude}%2C${item.longitude}`;
-        item.image_source_name = url.host;
+        const item = new Result(apiResult.records[index]);
         this.columns[column_number].push(item);
         this.items[item.id] = item;
       }

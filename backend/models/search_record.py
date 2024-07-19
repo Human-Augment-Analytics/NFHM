@@ -1,11 +1,15 @@
-from sqlmodel import Field, SQLModel
 from datetime import date
+from typing import Optional
 from uuid import UUID
-from typing import Optional, List
-from sqlalchemy import Column
+
 from geoalchemy2 import Geography
+from geoalchemy2.shape import to_shape
+from pydantic import computed_field
 from pgvector.sqlalchemy import Vector
+from sqlmodel import Field, SQLModel
+from sqlalchemy import Column
 # from sqlalchemy import ARRAY, Float
+
 
 class SearchRecord(SQLModel, table=True):
     __tablename__ = "search_records"
@@ -32,7 +36,13 @@ class SearchRecord(SQLModel, table=True):
     embedding: Optional[list] = Field(default=None, sa_column=Column(Vector))
     # embedding: List[float] = Field(sa_column=Column(ARRAY(Float)))
 
-
-
     class Config:
         arbitrary_types_allowed = True
+
+    @computed_field
+    @property
+    def to_lat_long(self) -> dict[str, float]:
+        if self.location:
+            point = to_shape(self.location)
+            return {'latitude': point.y, 'longitude': point.x}
+        return {}
