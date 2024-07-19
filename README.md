@@ -30,8 +30,8 @@ Docker is a prerequisite.
 
 1) Open and run project in dev container with [VSCode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 2) Set up postgres db with initital data: `bin/import_vector_db`
-3) Run backend API (from within the dev container): `bin/dev`
-4) 
+3) Run the backend API (from within the dev container): `bin/dev`
+4) Navigate to http://localhost:3000 in your browser
 
 ### Less Quick Start
 
@@ -46,6 +46,7 @@ If the Super Quick Start above doesn't work (for example, you're not using a mac
 4) Run import.
    - `docker exec -it nfhm_devcontainer-postgres-1 bash`
    - `psql -U postgres -d nfhm -f /tmp/import.pgsq`
+5) Navigate to http://localhost:3000 in your browser
 
 
 

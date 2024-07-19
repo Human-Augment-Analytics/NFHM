@@ -9,4 +9,4 @@ conda activate backend_api
 conda info --envs
 
 echo "Starting API server"
-uvicorn  --app-dir ./backend main:app --reload
+uvicorn  --app-dir ./backend main:app --reload --port 8080

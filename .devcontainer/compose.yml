@@ -1,5 +1,5 @@
 services:
-  python-app:
+  backend:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -9,16 +9,31 @@ services:
     command: sleep infinity
     networks:
       - default
+      - frontend
     # Uncomment the next line to use a non-root user for all processes.
     # user: vscode
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
     ports:
       - 45679:45679
+      - 8080:8080
     depends_on:
       - redis
       - postgres
       - mongo
+  
+  nginx:
+    build:
+      context: ../frontend
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:80
+    networks:
+      - frontend
+      - default
+    depends_on:
+      - backend
+
 
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -96,4 +111,7 @@ services:
 volumes:
   postgres-data:
   redis-data:
+
+networks:
+  frontend:
   
