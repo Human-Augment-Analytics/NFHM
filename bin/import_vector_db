@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Configuration
+DB_USER="postgres"
+DB_NAME="nfhm_test"
+DOWNLOAD_URL="https://drive.usercontent.google.com/download?id=17QGJ3o7rx88A51KjUije6RX_j4kV0WXr&confirm=xxx"
+ZIP_FILE="tmp.pgsql.zip"
+PGSQL_FILE="vector_embedder_data_only.pgsql"
+CONTAINER_PATH="/tmp/import.pgsql"
+
+# Function to check if a command was successful
+check_success() {
+    if [ $? -ne 0 ]; then
+        echo "Error: $1"
+        exit 1
+    fi
+}
+
+# Step 1: Download and unzip the sample vector database
+echo "Downloading and unzipping the sample vector database..."
+curl "$DOWNLOAD_URL" -o "$ZIP_FILE"
+check_success "Failed to download the file"
+
+unzip "$ZIP_FILE"
+check_success "Failed to unzip the file"
+
+# Step 2: Get the PostgreSQL container name
+echo "Finding the PostgreSQL container..."
+CONTAINER_NAME=$(docker ps | grep 'nfhm' | grep 'postgres' | awk '{print $NF}')
+if [ -z "$CONTAINER_NAME" ]; then
+    echo "Error: PostgreSQL container not found"
+    exit 1
+fi
+echo "Found container: $CONTAINER_NAME"
+
+# Step 3: Copy the file to the PostgreSQL container
+echo "Copying file to the PostgreSQL container..."
+docker cp "$PGSQL_FILE" "$CONTAINER_NAME:$CONTAINER_PATH"
+check_success "Failed to copy file to container"
+
+# Step 4: Import the file into PostgreSQL
+echo "Importing file into PostgreSQL..."
+docker exec -i "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -f "$CONTAINER_PATH"
+check_success "Failed to import file into PostgreSQL"
+
+# Clean up
+echo "Cleaning up..."
+rm "$ZIP_FILE" "$PGSQL_FILE"
+
+echo "Import completed successfully!"

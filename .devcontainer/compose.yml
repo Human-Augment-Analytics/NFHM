@@ -1,5 +1,5 @@
 services:
-  python-app:
+  backend:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -9,16 +9,30 @@ services:
     command: sleep infinity
     networks:
       - default
+      - frontend
     # Uncomment the next line to use a non-root user for all processes.
     # user: vscode
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
     ports:
-      - 45679:45679
+      - 8080:8080
     depends_on:
       - redis
       - postgres
       - mongo
+  
+  nginx:
+    build:
+      context: ../frontend
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:80
+    networks:
+      - frontend
+      - default
+    depends_on:
+      - backend
+
 
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -32,22 +46,21 @@ services:
       - 8001:8001
 
   postgres:
-    image: pgvector/pgvector:pg16
+    build:
+      context: ..
+      dockerfile: ./postgres/Dockerfile
     restart: unless-stopped
     networks:
       - default
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ../scripts/DDLs/init_nfhm_2024_06_14.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: nfhm
     command: |
       bash -c "
-        apt -y update && \
-        apt -y install postgresql-16-pgvector && \
-        apt -y install postgis && \
         su - postgres -c '/usr/local/bin/docker-entrypoint.sh'
         su - postgres -c '/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/data/'
       "
@@ -60,7 +73,7 @@ services:
     networks:
       - default
     volumes:
-      - mongodb-data:/data/db
+      - ../.mongo-data:/data/db
     ports:
       - 27018:27017
     environment:
@@ -87,7 +100,6 @@ services:
     networks:
       - default
     volumes:
-      # - jupyter-data:/home/jovyan/work
       - ../jupyter-workpad:/home/jovyan/work
     ports:
       - 8888:8888
@@ -98,5 +110,7 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  mongodb-data:
+
+networks:
+  frontend:
   

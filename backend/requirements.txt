@@ -4,3 +4,11 @@ uvicorn
 gunicorn
 pydantic
 python-multipart
+sqlmodel
+geoalchemy2[shapely]
+psycopg2-binary
+asyncpg==0.29.0
+torch
+pgvector
+open_clip_torch
+Pillow

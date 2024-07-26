@@ -33,12 +33,8 @@
             </div>
             <div class="image-attributes">
               <div class="image-attribute">
-                <div class="key">Scientific Name</div>
-                <div class="value">{{ clickedItem.scientific_name }}</div>
-              </div>
-              <div class="image-attribute">
                 <div class="key">Source</div>
-                <div class="value">{{ clickedItem.specimen_source_name }}</div>
+                <div class="value">{{ clickedItem.source }}</div>
               </div>
               <div class="image-attribute">
                 <div class="key">Global ID</div>
@@ -55,13 +51,15 @@
               <div class="image-attribute">
                 <div class="key">Source Link</div>
                 <div class="value link">
-                  <a href="#">{{ clickedItem.specimen_source_name }}</a>
+                  <a :href="clickedItem.source_link" target="_blank"
+                    >{{ clickedItem.source }}</a
+                  >
                 </div>
               </div>
               <div class="image-attribute">
                 <div class="key">Image Link</div>
                 <div class="value link">
-                  <a :href="clickedItem.media_url"
+                  <a :href="clickedItem.media_url" target="_blank"
                     >{{ clickedItem.image_source_name }}</a
                   >
                 </div>

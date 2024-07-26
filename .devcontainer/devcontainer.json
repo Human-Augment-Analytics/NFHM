@@ -1,7 +1,7 @@
 {
   "name": "NFHM",
   "dockerComposeFile": "compose.yml",
-  "service": "python-app",
+  "service": "backend",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   // Features to add to the dev container. More info: https://containers.dev/features.
   "features": {
@@ -19,15 +19,13 @@
     "MONGO__HOST": "mongo",
     "MONGO__USERNAME": "root",
     "MONGO__PASSWORD": "example",
-    "MONGO__DATABASE": "NHFM",
-    "QUEUE": "ingest_queue.RedisQueue",
-    "INPUT": "inputs.gbif_search",
-    "OUTPUT": "outputs.dump_to_mongo",
-    "SOURCE_QUEUE": "gbif"
+    "MONGO__DATABASE": "NHFM"
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
-    8000, // Python FastAPI backend
+    // 8000, // Python FastAPI backend
+    8080, // Python FastAPI backend
+    3000, // Vue frontend
     8081, // Mongo-Express https://github.com/mongo-express/mongo-express
     5432,
     6379,

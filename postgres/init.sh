@@ -1,8 +1,12 @@
+#!/bin/bash
+set -e
+
+psql -v --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
 -- 1. Create the NFHM database
-CREATE DATABASE NFHM;
+CREATE DATABASE nfhm;
 
 -- Connect to the NFHM database 
-\c NFHM
+\c nfhm
 
 -- 2. Create the postgis and vector extensions
 -- You'll need to make sure you install these extensions ahead of time.
@@ -34,6 +38,6 @@ CREATE TABLE search_records (
     embedding VECTOR  -- PGVector extension for storing vector data
 );
 
-
 CREATE UNIQUE INDEX idx_unique_media_uuid ON search_records (media_uuid);
 
+EOSQL
