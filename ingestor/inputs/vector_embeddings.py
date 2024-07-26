@@ -102,9 +102,12 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
     }
 
 
-    # query = {"_id": {"$gt": ObjectId("66882105ffdc56ce50b5f5f2") }}
-    query = {"_id": {"$gt": ObjectId("66882305ffdc56ce50b64652") }}
-    # query = {}
+
+    query = {}
+    # If you're trying to re-start a job that's already proceeded for some time, and want to avoid redundant work
+    # You can uncomment the below line and replace the ObjectId with the last _id you processed, which can be found by looking 
+    # at the speciemen_uuid of the last record in PG and then mapping that to what's in the mongo collection to get the Mongo document object id
+    # query = {"_id": {"$gt": ObjectId("66882305ffdc56ce50b64652") }}
     # // For sake of efficency, make sure sort is on an indexed field, otherwise skip will become very slow
     cursor = collection.find(query, projection).sort({ "_id": 1 }).skip(page_offset * page_size).limit(page_size)
     new_lines = []
