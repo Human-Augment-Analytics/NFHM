@@ -2,6 +2,8 @@
 
 The Natural Florida History Museum HAAG project.  A ML-backed search engine of ecological data.
 
+![BioCosmos Image Search of lepidoptera iridescence](https://github.com/user-attachments/assets/4859901d-c0da-4f17-9596-7b3d899f5493)
+
 
 ## Table of Contents
 
@@ -68,7 +70,6 @@ To run locally:
    - [Import the raw data into Mongo](#seeding-mongo-with-raw-data)
    - [Running the vector embedder job]()
    
-![BioCosmos Image Search](https://github.com/bharatr21/NFHM/assets/13381361/6b335845-56d2-49a8-85bf-95e06c65b9d3)
 
 ## Jupyter Notebooks
 
