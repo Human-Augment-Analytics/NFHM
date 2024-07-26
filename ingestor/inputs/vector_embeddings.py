@@ -104,6 +104,7 @@ async def extract_data(collection: Any, page_size: int, page_offset: int):
 
 
     query = {}
+    # TODO: Turn the following comment into a command line example.
     # If you're trying to re-start a job that's already proceeded for some time, and want to avoid redundant work
     # You can uncomment the below line and replace the ObjectId with the last _id you processed, which can be found by looking 
     # at the speciemen_uuid of the last record in PG and then mapping that to what's in the mongo collection to get the Mongo document object id

@@ -12,6 +12,7 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 - [Seeding Mongo with Raw Data](#seeding-mongo-with-raw-data)
    - [Seeding Mongo with a sample of iDigBio data](#seeding-mongo-with-a-sample-of-idigbio-data)
    - [Seeding Mongo with a sample of GBIF data](#seeding-mongo-with-a-sample-of-gbif-data)
+- [Generate Embeddings](#generate-embeddings)
 - [Jupyter Notebooks](#jupyter-notebooks)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
 - [Accessing the Postgres Database](#accessing-the-postgres-database)
@@ -81,15 +82,27 @@ We use [Mongo](#accessing-the-mongo-database) to house the raw data we import fr
 ### Seeding Mongo with a sample of iDigBio data:
 1) Activate the ingestor_worker conda environment: `$ conda activate ingestor_worker`
 2) Start by spinning up the iDigBio worker.
-   - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can pass them in via the command line.  We'll do the latter:
+   - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can set them in via the command line.  We'll do the latter:
       - (from within the dev container): 
-         - `$ SOURCE_QUEUE="idigbio" INPUT="inputs.idigbio_search" python ingestor/ingestor.py`
+         - Open new tab (or reload terminal) to make sure conda can init:
+            - `conda activate ingestor_worker`
+         - Set env vars, e.g.,:
+            - ```bash
+               export SOURCE_QUEUE="idigbio" // Indicates which queue to read from
+               export INPUT="inputs.idigbio_search" // Indicates which input function to run for the job.  Input functions can be found under ./ingestor/inputs
+               export QUEUE="ingest_queue.RedisQueue" // Indicates which queueing backend to use.  Currently, only option is redis.
+               export OUTPUT="outputs.dump_to_mongo" // Indicates the output function to run.  Output functions can be found under ./ingestor/outupts/
+               ```
+         - Run the job
+            - `python ingestor/ingestor.py`
        ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/b77126f5-288f-4c55-b2b0-69768903e011)
 
 3) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
 4) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
-5) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench:
-   - `LPUSH idigbio '{"search_dict":{"order":"lepidoptera","hasImage":true,"data.dwc:institutionCode":"YPM"},"import_all":true}'`
+5) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench: 
+   ```
+   LPUSH idigbio '{"search_dict":{"order":"lepidoptera","hasImage":true,"data.dwc:institutionCode":"YPM"},"import_all":true}'
+   ```
    -  `search_dict` is the verbatim query passed to the iDigBio API.  Consult the [wiki](https://www.idigbio.org/wiki/index.php/Wiki_Home) and [the github wiki](https://github.com/iDigBio/idigbio-search-api/wiki) for search options.
    - `import_all` is a optional param (default: False) that'll iteratre through all pages of results and import the raw data into Mongo.  Otherwise, only the first page of results are fetched.  Consequently, please be mindful when setting this param as there are _a lot_ (~200 GB, not including media data) of records in iDigBio.
    - ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/0bbc0cc7-fff1-4b1a-927f-1fe9f153de06)
@@ -99,9 +112,36 @@ We use [Mongo](#accessing-the-mongo-database) to house the raw data we import fr
 
 ### Seeding Mongo with a sample of GBIF data:
 The basic process of seeding Mongo with raw GBIF data is essentially the same as with iDigBio.  However, you'll need make sure you have the GBIF worker up-and-running in your dev container with the correct environment inputs:
-- `$ SOURCE_QUEUE="gbif" INPUT="inputs.gbif_search" python ingestor/ingestor.py`
+   - ```bash
+      conda activate ingestor_worker
+
+      export SOURCE_QUEUE="gbif" 
+      export INPUT="inputs.gbif_search" 
+      export QUEUE="ingest_queue.RedisQueue"
+      export OUTPUT="outputs.dump_to_mongo"
+
+      python ingestor/ingestor.py  // Run the job
+      ```
 - From the workbench of Redis Insight, pass a simple search string to the `gbif` queue:
    - `LPUSH gbif "puma concolor"`
+
+
+## Generate Embeddings
+
+Once we've imported raw-form data into Mongo, we'll want to generate vector embeddings for the data and store them to Postgres.  This is where the web api serves query results from.  
+
+The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init.
+
+```bash
+conda activate ingestor_worker
+
+export SOURCE_QUEUE="embedder"
+export INPUT="inputs.vector_embedder"
+export QUEUE="ingest_queue.RedisQueue"
+export OUTPUT="outputs.index_to_postgres"
+
+python ingestor/ingestor.py
+```
 
 ## Accessing the Postgres Database
 
@@ -148,11 +188,8 @@ Information about the license for your project.
 ## Useful Commands
 
 
-We expect to do a lot experiments that vary the content of the DB.  Consequently, it's imperative to be able to share our _exact_ data with each other.  You can use `pg_dump` to do so:
+We expect to do a lot experiments that vary the content of the DB.  Consequently, it's imperative to be able to share our _exact_ data with each other.  This way we can avoid repeating ourselves with the lengthy process of importing data from external sources and generating embeddings.  You can use `pg_dump` to do so:
 
 `docker exec  nfhm_devcontainer-postgres-1 bash -c "pg_dump -U postgres nfhm" > <FILE_NAME>.pgsql`
 
 And then zip it up and send.
-
-
-SOURCE_QUEUE="embedder" INPUT="inputs.vector_embedder" OUTPUT="outputs.index_to_postgres" python ingestor/ingestor.py

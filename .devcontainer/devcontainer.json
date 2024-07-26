@@ -19,11 +19,7 @@
     "MONGO__HOST": "mongo",
     "MONGO__USERNAME": "root",
     "MONGO__PASSWORD": "example",
-    "MONGO__DATABASE": "NHFM",
-    "QUEUE": "ingest_queue.RedisQueue",
-    "INPUT": "inputs.gbif_search",
-    "OUTPUT": "outputs.dump_to_mongo",
-    "SOURCE_QUEUE": "gbif"
+    "MONGO__DATABASE": "NHFM"
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
