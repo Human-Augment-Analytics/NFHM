@@ -54,7 +54,7 @@ If the Super Quick Start above doesn't work (for example, you're not using a mac
 
 
 
-### Least Quick Start ()
+### Least Quick Start
 
 For optimal portability, this app uses [Dev Containers](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-a-dev-container-configuration/introduction-to-dev-containers) to configure and manage the development environment. This means any developer with Docker installed and an appropriate IDE (e.g., [VSCode](https://code.visualstudio.com/docs/devcontainers/containers), [GitHub Codespaces](https://docs.github.com/en/codespaces/overview), a [JetBrains IDE](https://www.jetbrains.com/help/idea/connect-to-devcontainer.html) if you like debugging) or the [Dev Container CLI](https://github.com/devcontainers/cli) should be able to get this project running locally in just a few steps.
 
