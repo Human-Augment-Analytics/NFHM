@@ -59,11 +59,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: nfhm
-    command: |
-      bash -c "
-        su - postgres -c '/usr/local/bin/docker-entrypoint.sh'
-        su - postgres -c '/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/data/'
-      "
+    # command: |
+    #   bash -c "
+    #     su - postgres -c '/usr/local/bin/docker-entrypoint.sh'
+    #     su - postgres -c '/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/data/'
+    #   "
     ports:
       - 5432:5432
 
