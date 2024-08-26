@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+# This script is run as a postCreateCommand from the dev container
+
+. "$(conda info --base)/etc/profile.d/conda.sh"
+
+conda init
+echo "Activating conda environment: Ingestor Worker"
+echo "Generating Embeddings"
+
+conda activate ingestor_worker
+
+export SOURCE_QUEUE="embedder"
+export INPUT="inputs.vector_embedder"
+export QUEUE="ingest_queue.RedisQueue"
+export OUTPUT="outputs.index_to_postgres"
+
+python ingestor/ingestor.py
