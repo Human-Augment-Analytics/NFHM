@@ -1,9 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
+# -- 1. Create the NFHM database
 
-psql -v --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
--- 1. Create the NFHM database
-CREATE DATABASE nfhm;
+# drop nfm if already exists
+if psql -lqt | cut -d \| -f 1 | grep -qw nfhm; then
+    echo "Dropping existing nfhm database."
+    psql -X -c "DROP DATABASE nfhm"
+fi
+
+psql -X -c "CREATE DATABASE nfhm"
+
+# Now check if the database exists, loop until detected
+until psql -U "$POSTGRES_USER" -tc "SELECT 1 FROM pg_database WHERE datname = 'nfhm'" | grep -q 1; do
+    echo "Waiting for nfhm database to be created..."
+    sleep 2
+done
+
+psql -v --username "$POSTGRES_USER" --dbname "nfhm" <<-EOSQL
 
 -- Connect to the NFHM database 
 \c nfhm
@@ -41,3 +54,4 @@ CREATE TABLE search_records (
 CREATE UNIQUE INDEX idx_unique_media_uuid ON search_records (media_uuid);
 
 EOSQL
+wait 
