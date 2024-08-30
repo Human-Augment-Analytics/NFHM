@@ -2,7 +2,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Annotated
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(protected_namespaces=('settings_',))
+    model_config = SettingsConfigDict(extra="allow", protected_namespaces=('settings_',))
+
     
     model_name: Annotated[str, Field(
         default="ViT-B-32",

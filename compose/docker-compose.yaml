@@ -117,7 +117,7 @@ services:
     #           count: 1
     #           capabilities: [gpu]
 
-  backend:
+   backend:
     image: nfhm/backend-api
     build: ../backend
     depends_on:
@@ -125,6 +125,21 @@ services:
     networks:
       - frontend
       - default
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-ViT-B-32}
+      - MODEL_PRETRAINED=${MODEL_PRETRAINED:-laion2b_s34b_b79k}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@postgres/nfhm}
+      - POOL_SIZE=${POOL_SIZE:-5}
+      - MAX_OVERFLOW=${MAX_OVERFLOW:-10}
+    # Uncomment below in order to utilize nvidia GPU with the backend api
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
 
   nginx:
     image: nfhm/nginx

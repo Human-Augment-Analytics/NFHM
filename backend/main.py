@@ -32,6 +32,7 @@ def get_db_engine() -> AsyncEngine:
 async def lifespan(app: FastAPI):
     logger.info("Starting up application...")
     try:
+        # MPS is for apple silicon GPU, cuda is ofc nvidia.
         device = torch.device("mps:0" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
         logger.info(f"Using device: {device}")
         
