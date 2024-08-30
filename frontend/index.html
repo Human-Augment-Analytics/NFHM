@@ -16,122 +16,12 @@
     <script src="https://unpkg.com/vue@3.4.9/dist/vue.global.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="static/sweetalert2.all.min.js"></script>
-    <script src="static/app.js" defer></script>
+    <script type="module" src="static/app.js"></script>
     <title>BioCosmos</title>
     <link rel="shortcut icon" type="image/jpg" href="static/favicon256.jpg" />
   </head>
 
   <body>
-    <div id="app">
-      <div class="view-image" v-if="focusImage">
-        <span @click="closeFocus">X</span>
-        <div class="image-content">
-          <div class="text-content">
-            <div class="details">
-              <h2 class="text-primary">{{ clickedItem.name }}</h2>
-              <p>{{ clickedItem.description }}</p>
-            </div>
-            <div class="image-attributes">
-              <div class="image-attribute">
-                <div class="key">Source</div>
-                <div class="value">{{ clickedItem.source }}</div>
-              </div>
-              <div class="image-attribute">
-                <div class="key">Global ID</div>
-                <div class="value">{{ clickedItem.id }}</div>
-              </div>
-              <div class="image-attribute">
-                <div class="key">Location</div>
-                <div class="value link">
-                  <a :href="clickedItem.map_url" target="_blank"
-                    >{{ clickedItem.latitude }}, {{ clickedItem.longitude }}</a
-                  >
-                </div>
-              </div>
-              <div class="image-attribute">
-                <div class="key">Source Link</div>
-                <div class="value link">
-                  <a :href="clickedItem.source_link" target="_blank"
-                    >{{ clickedItem.source }}</a
-                  >
-                </div>
-              </div>
-              <div class="image-attribute">
-                <div class="key">Image Link</div>
-                <div class="value link">
-                  <a :href="clickedItem.media_url" target="_blank"
-                    >{{ clickedItem.image_source_name }}</a
-                  >
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="image-src">
-            <img
-              alt=""
-              :src="clickedItem.media_url"
-              onerror="this.onerror=''; this.src='static/unavailable-image.jpg';"
-            />
-          </div>
-        </div>
-      </div>
-      <div class="bannerimage"></div>
-      <div class="container">
-        <div class="heading">
-          <div class="inp-button">
-            <p>
-              Search with a natural language query or upload an image to perform
-              a reverse image search.
-            </p>
-            <div class="inputs">
-              <label id="magglass">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  name="searchQuery"
-                  id="searchQuery"
-                  class="search-query input input-bordered input-primary"
-                  :value="inputQuery"
-                  @input="searchQueryChanged"
-                />
-              </label>
-
-              <label for="fileUpload" class="custom-file-upload">
-                <img
-                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAxklEQVR4nO2UMQrCQBBFg5Vi6QXsvYAXEHIMbxJLO49gH2TzX5kqYNDK1gvE2s5SiEQIhLBNkg1RyIcphh3+g9mZ8bxRPyPABx5A3jGywssGyByY5yXEBvg+OuhEbvUZFABcJKW9ASSlwLk3QBM5ARhjFoCJ43jeGQCsq3kYhjNJ16JW0rETANgAb0n7Ig+CYCLpVJv5bStAFEVL4Fkx2kk61JdK0gtYNQIkSTIFbg02917+x39MUVtA78fOdwTJrOd61GD6AJGcB5JWDDmgAAAAAElFTkSuQmCC"
-                />
-              </label>
-              <input
-                type="file"
-                class="hidden"
-                name="fileUpload"
-                id="fileUpload"
-                @change="uploadFileChanged"
-                ref="fileUploadElement"
-                accept="image/*"
-              />
-            </div>
-            <div class="buttons">
-              <button class="btn btn-primary" @click="submitQuery">
-                Search
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="box" v-if="displayResults">
-          <div class="img-column" v-for="column in columns">
-            <template v-for="value in column">
-              <img
-                :src="value.media_url"
-                onerror="this.onerror=''; this.src='static/unavailable-image.jpg';"
-                class="img-fluid"
-                :id="value.id"
-                @click="displayImage"
-              />
-            </template>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="app"></div>
   </body>
 </html>
