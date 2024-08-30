@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+. "$(conda info --base)/etc/profile.d/conda.sh"
+
+conda init
+echo "Activating conda environment: Ingestor Worker"
+echo "IDGIBIO Search Dump to MongoDB"
+
+
+conda activate ingestor_worker
+
+ export SOURCE_QUEUE="idigbio"
+ export INPUT="inputs.idigbio_search"
+ export QUEUE="ingest_queue.RedisQueue"
+ export OUTPUT="outputs.dump_to_mongo"
+
+ python ingestor/ingestor.py
