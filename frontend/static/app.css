@@ -176,6 +176,8 @@ body {
   align-items: center;
   margin: 0;
   padding: 0;
+  top: 0%;
+  left: 0%;
 }
 
 .view-image span {
