@@ -20,8 +20,8 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 - [Accessing the Postgres Database](#accessing-the-postgres-database)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
 - [Accessing Redis](#accessing-redis)
-- [Contributing](#contributing)
-- [License](#license)
+- [Useful Commands](#useful-commands)
+   - [Sharing Data](#sharing-data)
 
 ## Local Setup
 
@@ -49,11 +49,12 @@ If the Super Quick Start above doesn't work (for example, you're not using a mac
 4) Run import.
    - `docker exec -it nfhm_devcontainer-postgres-1 bash`
    - `psql -U postgres -d nfhm -f /tmp/import.pgsq`
-5) Navigate to http://localhost:3000 in your browser
+5) From a _new_ terminal tab in the dev container, run `bin/dev`
+6) Navigate to http://localhost:3000 in your browser
 
 
 
-### Least Quick Start ()
+### Least Quick Start
 
 For optimal portability, this app uses [Dev Containers](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-a-dev-container-configuration/introduction-to-dev-containers) to configure and manage the development environment. This means any developer with Docker installed and an appropriate IDE (e.g., [VSCode](https://code.visualstudio.com/docs/devcontainers/containers), [GitHub Codespaces](https://docs.github.com/en/codespaces/overview), a [JetBrains IDE](https://www.jetbrains.com/help/idea/connect-to-devcontainer.html) if you like debugging) or the [Dev Container CLI](https://github.com/devcontainers/cli) should be able to get this project running locally in just a few steps.
 
@@ -62,7 +63,7 @@ To run locally:
    ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/ba3aec85-a5f2-42a3-bf87-2d1f423305eb)
 
   
-2) (SUBJECT TO CHANGE): run `$ bin/dev` to start the python backend.
+2) (SUBJECT TO CHANGE): run `bin/dev` to start the python backend.
 3) Visit `http://localhost:8000/`
 4) (SUBJECT TO CHANGE) Here is a mock screenshot of how you can expect the website to look:
 5) Next you'll need to import data.
@@ -81,7 +82,7 @@ Alternatively, you can use a local installation of Jupyter if you prefer.  Regar
 We use [Mongo](#accessing-the-mongo-database) to house the raw data we import from iDigBio, GBIF, and any other external sources.  We use [Redis](#accessing-redis) as our queueing backend.  To seed your local environment with a sample of data to work with, you'll need to first follow the instructions above for [local setup](#local-setup).
 
 ### Seeding Mongo with a sample of iDigBio data:
-1) Activate the ingestor_worker conda environment: `$ conda activate ingestor_worker`
+1) Activate the ingestor_worker conda environment: `conda activate ingestor_worker`
 2) Start by spinning up the iDigBio worker.
    - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can set them in via the command line.  We'll do the latter:
       - (from within the dev container): 
@@ -96,7 +97,6 @@ We use [Mongo](#accessing-the-mongo-database) to house the raw data we import fr
                ```
          - Run the job
             - `python ingestor/ingestor.py`
-       ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/b77126f5-288f-4c55-b2b0-69768903e011)
 
 3) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
 4) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
@@ -171,23 +171,9 @@ To access the local Redis server with [Redis Insight](https://redis.io/insight/)
 ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/cf36476e-6b8e-4832-afa4-0bead6da7214)
 
 
-## Usage
-
-Instructions on how to use your project and any relevant examples.
-
-## Contributing
-
-Guidelines on how others can contribute to your project.
-
-## License
-
-Information about the license for your project.
-
-
-## TMP
-
 ## Useful Commands
 
+### Sharing Data
 
 We expect to do a lot experiments that vary the content of the DB.  Consequently, it's imperative to be able to share our _exact_ data with each other.  This way we can avoid repeating ourselves with the lengthy process of importing data from external sources and generating embeddings.  You can use `pg_dump` to do so:
 
