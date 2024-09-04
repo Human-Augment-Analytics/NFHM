@@ -82,8 +82,15 @@ Alternatively, you can use a local installation of Jupyter if you prefer.  Regar
 We use [Mongo](#accessing-the-mongo-database) to house the raw data we import from iDigBio, GBIF, and any other external sources.  We use [Redis](#accessing-redis) as our queueing backend.  To seed your local environment with a sample of data to work with, you'll need to first follow the instructions above for [local setup](#local-setup).
 
 ### Seeding Mongo with a sample of iDigBio data:
-1) Activate the ingestor_worker conda environment: `conda activate ingestor_worker`
-2) Start by spinning up the iDigBio worker.
+
+
+1) There are two methods for starting the idigbio data ingestion process: 
+
+##### Easy method:
+From a _new_ terminal tab in the dev container, run `bin/ingest_idigbio` to start the ingestion script
+
+##### Less Easy method
+Slow method: This method accomplishes the same task as the script above. Start by spinning up the iDigBio worker.
    - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can set them in via the command line.  We'll do the latter:
       - (from within the dev container): 
          - Open new tab (or reload terminal) to make sure conda can init:
@@ -98,9 +105,9 @@ We use [Mongo](#accessing-the-mongo-database) to house the raw data we import fr
          - Run the job
             - `python ingestor/ingestor.py`
 
-3) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
-4) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
-5) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench: 
+2) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
+3) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
+4) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench: 
    ```
    LPUSH idigbio '{"search_dict":{"order":"lepidoptera","hasImage":true,"data.dwc:institutionCode":"YPM"},"import_all":true}'
    ```
@@ -108,11 +115,14 @@ We use [Mongo](#accessing-the-mongo-database) to house the raw data we import fr
    - `import_all` is a optional param (default: False) that'll iteratre through all pages of results and import the raw data into Mongo.  Otherwise, only the first page of results are fetched.  Consequently, please be mindful when setting this param as there are _a lot_ (~200 GB, not including media data) of records in iDigBio.
    - ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/0bbc0cc7-fff1-4b1a-927f-1fe9f153de06)
 
-6) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
+5) Navigate to Mongo Express (or use your preferred Mongo client) at http://localhost:8081 and navigate to the `idigbio` collection inside the `NFHM` database to see the imported data.
 ![image](https://github.com/Human-Augment-Analytics/NFHM/assets/3391824/c02e6279-92fa-4dca-81d4-21deb53dbf2c)
 
 ### Seeding Mongo with a sample of GBIF data:
 The basic process of seeding Mongo with raw GBIF data is essentially the same as with iDigBio.  However, you'll need make sure you have the GBIF worker up-and-running in your dev container with the correct environment inputs:
+
+Similarly to iDigBio, we have the same two ways of running the ingestor:
+   - `bin/ingest_gbif`
    - ```bash
       conda activate ingestor_worker
 
@@ -131,8 +141,12 @@ The basic process of seeding Mongo with raw GBIF data is essentially the same as
 
 Once we've imported raw-form data into Mongo, we'll want to generate vector embeddings for the data and store them to Postgres.  This is where the web api serves query results from.  
 
-The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init.
+The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init. Similarly, we can run a script to activate the embedder, or run it ourselves: 
 
+Script: 
+`bin/ingest_embedder`
+
+More detailed script:
 ```bash
 conda activate ingestor_worker
 
@@ -143,6 +157,10 @@ export OUTPUT="outputs.index_to_postgres"
 
 python ingestor/ingestor.py
 ```
+
+As this ingestor is running, it is waiting a signal from the Redis queue to begin the embedding process. This will work very similarly to the `gbif` and `idigbio` queues above: 
+From the workbench of Redis Insight, pass a simple search string to the `embedder` queue:
+`LPUSH embedder '{}'`
 
 ## Accessing the Postgres Database
 

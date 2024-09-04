@@ -2,7 +2,7 @@
 
 scripts=(
     "bin/dev"
-    "bin/ingest_embed"
+    "bin/ingest_embedder"
     "bin/ingest_gbif"
 )
 
