@@ -8,7 +8,7 @@ export default {
         <div class="img-column" v-for="column in resultColumns" :key="column">
             <template v-for="result in column">
                 <img
-                    :src="result.media_url"
+                    :src="result.image_source_name != 'NA' ? result.media_url : 'static/unavailable-image.jpg'"
                     onerror="this.onerror=''; this.src='static/unavailable-image.jpg';"
                     class="img-fluid"
                     :id="result.id"
@@ -21,11 +21,12 @@ export default {
     data() {
       return {
         resultColumns: [[], [], [], []],
-        display: false
+        display: false,
       }
     },
     watch: {
       async apiResult(value) {
+        this.resultColumns = [[], [], [], []];
         if (value.length != 0) {
           await this.addImages(this.apiResult);
         }

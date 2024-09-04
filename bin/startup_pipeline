@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+scripts=(
+    "bin/dev"
+    "bin/ingest_embed"
+    "bin/ingest_gbif"
+)
+
+for script in "${scripts[@]}"; do
+    bash "$script" &
+done
+
+wait

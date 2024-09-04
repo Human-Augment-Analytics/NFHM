@@ -41,6 +41,7 @@ export default {
               </button>
             </div>
           </div>
+        </div>
     `,
     data() {
       return {
