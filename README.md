@@ -1,5 +1,6 @@
 # Project Name
 
+
 The Natural Florida History Museum HAAG project.  A ML-backed search engine of ecological data.
 
 ![BioCosmos Image Search of lepidoptera iridescence](https://github.com/user-attachments/assets/4859901d-c0da-4f17-9596-7b3d899f5493)
