@@ -22,7 +22,7 @@ model = None
 preprocess = None
 tokenizer = None
 device = (
-    torch.device("mps:0") if torch.backends.mps.is_available() else torch.device("cpu")
+    torch.device("mps:0" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
 )
 
 logger.info(f"Using device: {device}")

@@ -2,8 +2,7 @@ import asyncio
 import logging
 import multiprocessing
 import signal
-from typing import Any, Callable, Type
-
+from typing import Any, Callable, Type, TypedDict, Dict
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -13,16 +12,7 @@ from motor.motor_asyncio import (
 from pydantic import BaseModel, Field, ImportString, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from exceptions import StartupException
-from inputs import gbif_search
-from inputs import idigbio_search
-from inputs import vector_embedder
-
-# from outputs.json_output import dump_to_json
-from outputs import dump_to_mongo
-from outputs import index_to_postgres
-from outputs import dev_null
-from ingest_queue import RedisQueue, BaseQueue
+from ingest_queue import BaseQueue
 from worker import RedisWorker
 import asyncpg
 
@@ -60,14 +50,20 @@ class PostgresSettings(BaseModel):
     user: str | None = None
     password: str | None = None
 
+class WorkerKwargs(TypedDict):
+    queue: Any
+    input_func: Callable[..., Any]
+    output_func: Callable[..., Any]
+    output_kwargs: Dict[str, Any]
+    input_kwargs: Dict[str, Any]
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="__")
-    source_queue: str
+    source_queue: str = ''
     redis: RedisSettings | None = None
     mongo: MongoSettings | None = None
-    # number_of_workers: int = Field(default=multiprocessing.cpu_count())
-    number_of_workers: int = Field(default=1)
+    number_of_workers: int = Field(default=multiprocessing.cpu_count())
     postgres: PostgresSettings | None = None
     queue: ImportString[Type[BaseQueue]] = Field(default="ingest_queue.RedisQueue")
     input: ImportString[Callable[[Any], Any]] = Field(default="inputs.gbif_search")
@@ -79,7 +75,7 @@ class Settings(BaseSettings):
         if isinstance(data, dict):
             if data.get("queue").rsplit(".")[-1] == "RedisQueue":
                 assert (
-                    data.get("redis") is not None
+                    data.get("redis") is not None 
                 ), "REDIS__HOST must be set if using the RedisQueue"
         return data
 
@@ -103,7 +99,7 @@ settings = Settings()
 
 async def main():
     logger.info(settings.model_dump_json())
-    worker_kwargs = {
+    worker_kwargs: WorkerKwargs = {
         "queue": None,
         "input_func": settings.input,
         "output_func": settings.output,
@@ -113,12 +109,10 @@ async def main():
 
     work_kwargs = {"source_queue": settings.source_queue}
 
-    # if settings.input.__name__ == 'vector_embedder':
-    #     await load_model()
-
     worker_klass = None
     # Setup the redis queue and wait for the healthcheck
     if settings.queue.__name__ == "RedisQueue":
+        assert settings.redis is not None, "Redis settings are required for RedisQueue"
         worker_kwargs["queue"] = settings.queue(**settings.redis.model_dump())
         worker_klass = RedisWorker
         worker_kwargs["input_kwargs"]["queue"] = worker_kwargs["queue"]
@@ -170,8 +164,9 @@ async def main():
     # kwargs as defined by the class signature first, then the data from the input function.
     # Here, we're saying the output is dump_to_json and the kwargs for that is specifying the filename
     # that will be used.
+    assert worker_klass is not None, "worker_klass must be set before creating workers, e.g., RedisWorker"
     workers = [
-        worker_klass(**worker_kwargs) for i in range(settings.number_of_workers + 1)
+        worker_klass(**worker_kwargs) for _ in range(settings.number_of_workers + 1)
     ]
 
     # Create the async tasks which is the work function for the worker.

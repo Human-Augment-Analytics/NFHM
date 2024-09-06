@@ -3,14 +3,15 @@ from .base import Worker
 
 import asyncio
 from logging import getLogger
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Dict
 
-MessageProcessFunc = Callable[[str, dict], Awaitable[None]]
+MessageProcessFunc = Callable[[str, Dict[Any, Any]], Awaitable[None]]
+
 logger = getLogger('worker.redis')
 
 
 class RedisWorker(Worker):
-    def __init__(self, queue: RedisQueue, input_func: MessageProcessFunc, output_func: MessageProcessFunc | None = None, input_kwargs: dict[Any, Any] = {}, output_kwargs: dict[Any, Any] = {}, timeout: int | None = 10):
+    def __init__(self, queue: RedisQueue, input_func: MessageProcessFunc, output_func: MessageProcessFunc | None = None, input_kwargs: Dict[Any, Any] = {}, output_kwargs: Dict[Any, Any] = {}, timeout: int | None = 10):
         self.queue = queue
         self.input = input_func
         self.output = output_func
@@ -39,20 +40,19 @@ class RedisWorker(Worker):
                     await self.queue.delete(wip_queue, queued_data)
 
                     logger.info(f'Calling output function: {self.output}')
-                    try:
-                        if asyncio.iscoroutinefunction(self.output):
-                            print(self.output_kwargs)
-                            await self.output(results, **self.output_kwargs)
-                        else:
-                            print(self.output_kwargs)
-                            self.output(results, **self.output_kwargs)
-                    except Exception as e:
-                        logger.error(f'Error processing the output function: {e}')
-                    # logger.info(f'Queueing the results to {ingest_queue}')
-                    # with open('test.json', 'w+') as outfile:
-                    #     import json
-                    #     json.dump(results, outfile, indent=4)
-                    # await self.queue.enqueue(ingest_queue, results)
+                    if self.output:
+                        try:
+                            if asyncio.iscoroutinefunction(self.output):
+                                await self.output(results, **self.output_kwargs)
+                            else:
+                                self.output(results, **self.output_kwargs)
+                        except Exception as e:
+                            logger.error(f'Error processing the output function: {e}')
+                        # logger.info(f'Queueing the results to {ingest_queue}')
+                        # with open('test.json', 'w+') as outfile:
+                        #     import json
+                        #     json.dump(results, outfile, indent=4)
+                        # await self.queue.enqueue(ingest_queue, results)
                 else:
                     logger.info(f'No message received in {self.timeout}')
             except asyncio.CancelledError:

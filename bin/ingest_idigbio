@@ -1,20 +1,17 @@
 #!/usr/bin/env sh
 
-# This script is run as a postCreateCommand from the dev container
-
 . "$(conda info --base)/etc/profile.d/conda.sh"
 
 conda init
 echo "Activating conda environment: Ingestor Worker"
-echo "iDigBio Search Dump to MongoDB"
+
+echo "IDGIBIO Search Dump to MongoDB"
 
 conda activate ingestor_worker
 
-export SOURCE_QUEUE="idigbio" 
-export INPUT="inputs.idigbio_search" 
-export QUEUE="ingest_queue.RedisQueue"
-export OUTPUT="outputs.dump_to_mongo"
+ export SOURCE_QUEUE="idigbio"
+ export INPUT="inputs.idigbio_search"
+ export QUEUE="ingest_queue.RedisQueue"
+ export OUTPUT="outputs.dump_to_mongo"
 
-conda info --envs
-
-python ingestor/ingestor.py 
+ python ingestor/ingestor.py

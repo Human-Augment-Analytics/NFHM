@@ -83,29 +83,7 @@ Alternatively, you can use a local installation of Jupyter if you prefer.  Regar
 We use [Mongo](#accessing-the-mongo-database) to house the raw data we import from iDigBio, GBIF, and any other external sources.  We use [Redis](#accessing-redis) as our queueing backend.  To seed your local environment with a sample of data to work with, you'll need to first follow the instructions above for [local setup](#local-setup).
 
 ### Seeding Mongo with a sample of iDigBio data:
-
-
-1) There are two methods for starting the idigbio data ingestion process: 
-
-##### Easy method:
-From a _new_ terminal tab in the dev container, run `bin/ingest_idigbio` to start the ingestion script
-
-##### Less Easy method
-Slow method: This method accomplishes the same task as the script above. Start by spinning up the iDigBio worker.
-   - The worker pulls in environment variables to determine which queue to pull from and which worker functions to call.  Consequently, you can either set those variables in `.devcontainer/devcontainer.json` -- which will require a rebuild and restart of the dev container -- or you can set them in via the command line.  We'll do the latter:
-      - (from within the dev container): 
-         - Open new tab (or reload terminal) to make sure conda can init:
-            - `conda activate ingestor_worker`
-         - Set env vars, e.g.,:
-            - ```bash
-               export SOURCE_QUEUE="idigbio" // Indicates which queue to read from
-               export INPUT="inputs.idigbio_search" // Indicates which input function to run for the job.  Input functions can be found under ./ingestor/inputs
-               export QUEUE="ingest_queue.RedisQueue" // Indicates which queueing backend to use.  Currently, only option is redis.
-               export OUTPUT="outputs.dump_to_mongo" // Indicates the output function to run.  Output functions can be found under ./ingestor/outupts/
-               ```
-         - Run the job
-            - `python ingestor/ingestor.py`
-
+1) From within a dev container: `$ bin/ingest_idigbio`
 2) Navigate in a browser to the [Redis](#accessing-redis) server via Redis Insight at http://localhost:8001, or connect to port `6379` via your preferred Redis client.
 3) Decide what sample of data you want to [query from iDigBio](https://github.com/iDigBio/idigbio-search-api/wiki/Additional-Examples#q-how-do-i-search-for-nsf_tcn-in-dwcdynamicproperties).  For this example, we'll limit ourselves to records of the order `lepidoptera` (butterflies and related winged insects) with associated image data from the Yale Peabody Museum.
 4) We'll `LPUSH` that query onto the `idigbio` queue from the Redis Insight workbench: 
@@ -121,19 +99,7 @@ Slow method: This method accomplishes the same task as the script above. Start b
 
 ### Seeding Mongo with a sample of GBIF data:
 The basic process of seeding Mongo with raw GBIF data is essentially the same as with iDigBio.  However, you'll need make sure you have the GBIF worker up-and-running in your dev container with the correct environment inputs:
-
-Similarly to iDigBio, we have the same two ways of running the ingestor:
-   - `bin/ingest_gbif`
-   - ```bash
-      conda activate ingestor_worker
-
-      export SOURCE_QUEUE="gbif" 
-      export INPUT="inputs.gbif_search" 
-      export QUEUE="ingest_queue.RedisQueue"
-      export OUTPUT="outputs.dump_to_mongo"
-
-      python ingestor/ingestor.py  // Run the job
-      ```
+   - `$ bin/ingest_gbif`
 - From the workbench of Redis Insight, pass a simple search string to the `gbif` queue:
    - `LPUSH gbif "puma concolor"`
 
@@ -144,20 +110,7 @@ Once we've imported raw-form data into Mongo, we'll want to generate vector embe
 
 The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init. Similarly, we can run a script to activate the embedder, or run it ourselves: 
 
-Script: 
-`bin/ingest_embedder`
-
-More detailed script:
-```bash
-conda activate ingestor_worker
-
-export SOURCE_QUEUE="embedder"
-export INPUT="inputs.vector_embedder"
-export QUEUE="ingest_queue.RedisQueue"
-export OUTPUT="outputs.index_to_postgres"
-
-python ingestor/ingestor.py
-```
+`$ bin/ingest_embedder`
 
 As this ingestor is running, it is waiting a signal from the Redis queue to begin the embedding process. This will work very similarly to the `gbif` and `idigbio` queues above: 
 From the workbench of Redis Insight, pass a simple search string to the `embedder` queue:
