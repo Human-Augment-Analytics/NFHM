@@ -54,9 +54,13 @@ services:
       - default
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ../postgres/migrations:/flyway/sql
+      - ../postgres/flyway/conf:/flyway/conf
+
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nfhm
     ports:
       - 5432:5432
 

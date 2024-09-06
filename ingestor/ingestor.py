@@ -2,6 +2,7 @@ import asyncio
 import logging
 import multiprocessing
 import signal
+import argparse
 from typing import Any, Callable, Type, TypedDict, Dict
 
 from motor.motor_asyncio import (
@@ -68,6 +69,9 @@ class Settings(BaseSettings):
     queue: ImportString[Type[BaseQueue]] = Field(default="ingest_queue.RedisQueue")
     input: ImportString[Callable[[Any], Any]] = Field(default="inputs.gbif_search")
     output: ImportString[Callable[[Any], Any]] = Field(default="outputs.dump_to_mongo")
+    input_kwargs: Dict[str, Any] = Field(default_factory=dict)
+    output_kwargs: Dict[str, Any] = Field(default_factory=dict)
+
 
     @model_validator(mode="after")
     @classmethod
@@ -99,12 +103,24 @@ settings = Settings()
 
 async def main():
     logger.info(settings.model_dump_json())
+
+    parser = argparse.ArgumentParser(description='Ingestor script')
+    parser.add_argument('--input_kwargs', nargs=2, action='append', metavar=('key', 'value'), help='Input kwargs')
+    parser.add_argument('--output_kwargs', nargs=2, action='append', metavar=('key', 'value'), help='Output kwargs')
+
+    args = parser.parse_args()
+
+    if args.input_kwargs:
+        settings.input_kwargs.update(dict(args.input_kwargs))
+    if args.output_kwargs:
+        settings.output_kwargs.update(dict(args.output_kwargs))
+
     worker_kwargs: WorkerKwargs = {
         "queue": None,
         "input_func": settings.input,
         "output_func": settings.output,
-        "output_kwargs": {},
-        "input_kwargs": {},
+        "output_kwargs": settings.output_kwargs,
+        "input_kwargs": settings.input_kwargs,
     }
 
     work_kwargs = {"source_queue": settings.source_queue}

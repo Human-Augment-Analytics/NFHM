@@ -6,7 +6,7 @@ from logging import getLogger
 from schema.processed_search_record import ProcessedSearchRecord
 
 
-logger = getLogger("outputs.mongo")
+logger = getLogger("outputs.postgres")
 
 
 async def index_to_postgres(
