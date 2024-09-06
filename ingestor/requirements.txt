@@ -50,3 +50,4 @@ asyncpg==0.29.0
 open_clip_torch
 pandas
 aiohttp
+asyncpg-stubs

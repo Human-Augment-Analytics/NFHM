@@ -8,21 +8,27 @@ from pydantic import computed_field
 from pgvector.sqlalchemy import Vector
 from sqlmodel import Field, SQLModel
 from sqlalchemy import Column
-# from sqlalchemy import ARRAY, Float
-
 
 class SearchRecord(SQLModel, table=True):
     __tablename__ = "search_records"
+    __table_args__ = {"extend_existing": True}
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    specimen_uuid: Optional[UUID] = Field(default=None)
-    media_uuid: Optional[UUID] = Field(default=None)
-    collection_date: Optional[date] = Field(default=None)
+
+    id: int = Field(default=None, primary_key=True)
+    specimen_uuid: Optional[UUID] = Field(default=None, index=True)
+    media_uuid: Optional[UUID] = Field(default=None, index=True)
+    collection_date: Optional[date] = Field(default=None, index=True)
     higher_taxon: Optional[str] = Field(default=None, max_length=512)
-    common_name: Optional[str] = Field(default=None, max_length=512)
-    scientific_name: Optional[str] = Field(default=None, max_length=512)
+    common_name: Optional[str] = Field(default=None, max_length=512, index=True)
+    scientific_name: Optional[str] = Field(default=None, max_length=512, index=True)
     recorded_by: Optional[str] = Field(default=None, max_length=256)
-    location: Optional[Geography] = Field(default=None, sa_column=Column(Geography(geometry_type='POINT', srid=4326)))
+    location: Optional[Geography] = Field(
+        sa_column=Column(Geography(geometry_type='POINT', srid=4326)),
+        default=None
+    )
     tax_kingdom: Optional[str] = Field(default=None, max_length=128)
     tax_phylum: Optional[str] = Field(default=None, max_length=128)
     tax_class: Optional[str] = Field(default=None, max_length=128)
@@ -33,11 +39,8 @@ class SearchRecord(SQLModel, table=True):
     earliest_epoch_or_lowest_series: Optional[str] = Field(default=None, max_length=512)
     earliest_age_or_lowest_stage: Optional[str] = Field(default=None, max_length=512)
     external_media_uri: Optional[str] = Field(default=None, max_length=2083)
-    embedding: Optional[list] = Field(default=None, sa_column=Column(Vector))
-    # embedding: List[float] = Field(sa_column=Column(ARRAY(Float)))
+    embedding: Optional[list[float]] = Field(default=None, sa_column=Column(Vector(512)))
 
-    class Config:
-        arbitrary_types_allowed = True
 
     @computed_field
     @property

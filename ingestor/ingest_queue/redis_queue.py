@@ -10,7 +10,7 @@ class RedisQueue(BaseQueue):
     def __init__(self, host: str, port: str = '6379', database: int = 0, username: str | None = None, password: str | None = None) -> None:
         self.conn = Redis(
             host=host,
-            port=port,
+            port=int(port),
             db=database,
             username=username,
             password=password,
@@ -18,7 +18,7 @@ class RedisQueue(BaseQueue):
         )
         super().__init__()
 
-    async def healthcheck(self):
+    async def healthcheck(self) -> None:
         await self.conn.ping()
 
     async def enqueue(self, source: str, data: str | list[dict[Any, Any]]):
