@@ -4,8 +4,8 @@
 
 conda init
 echo "Activating conda environment: Ingestor Worker"
-echo "IDGIBIO Search Dump to MongoDB"
 
+echo "IDGIBIO Search Dump to MongoDB"
 
 conda activate ingestor_worker
 

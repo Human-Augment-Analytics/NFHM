@@ -1,5 +1,6 @@
 # Project Name
 
+
 The Natural Florida History Museum HAAG project.  A ML-backed search engine of ecological data.
 
 ![BioCosmos Image Search of lepidoptera iridescence](https://github.com/user-attachments/assets/4859901d-c0da-4f17-9596-7b3d899f5493)
@@ -107,9 +108,13 @@ The basic process of seeding Mongo with raw GBIF data is essentially the same as
 
 Once we've imported raw-form data into Mongo, we'll want to generate vector embeddings for the data and store them to Postgres.  This is where the web api serves query results from.  
 
-The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init.
+The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init. Similarly, we can run a script to activate the embedder, or run it ourselves: 
 
-`$ bin/ingest_embed`
+`$ bin/ingest_embedder`
+
+As this ingestor is running, it is waiting a signal from the Redis queue to begin the embedding process. This will work very similarly to the `gbif` and `idigbio` queues above: 
+From the workbench of Redis Insight, pass a simple search string to the `embedder` queue:
+`LPUSH embedder '{}'`
 
 ## Accessing the Postgres Database
 

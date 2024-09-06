@@ -2,8 +2,14 @@ export default class Result {
     constructor(search_results) {
       this.id = search_results.id;
       this.media_url = search_results.media_url;
-      const url = new URL(this.media_url);
-      this.image_source_name = url.host;
+      try {
+        const url = new URL(this.media_url);
+        this.image_source_name = url.host;
+      }
+      catch (e) {
+        const url = null;
+        this.image_source_name = 'NA';
+      }
       this.latitude = search_results.latitude;
       this.longitude = search_results.longitude;
       this.map_url = `https://maps.google.com/?q=${this.latitude}%2C${this.longitude}`;
