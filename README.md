@@ -118,7 +118,7 @@ The process is very similar to importing data into Mongo.  Again, if you've just
 
 ## Database Versioning.
 
-We use Flyway to version the Postgres DB.  To make a new migration/version, add `.sql` file named per the [Flyway Naming Conventions](https://flywaydb.org/documentation/concepts/migrations#naming-conventions). `V#__DESCRIPTION.SQL` to the `postgres/migrations` directory.  Then rebuild the docker container. 
+We use Flyway to version the Postgres DB.  To make a new migration/version, add your migration changes to a file named per the [Flyway Naming Conventions](https://flywaydb.org/documentation/concepts/migrations#naming-conventions) to the `postgres/migrations` directory.  Then rebuild the docker container. 
 
 ## Running and tagging experiments
 
