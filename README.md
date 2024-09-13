@@ -15,6 +15,7 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
    - [Seeding Mongo with a sample of iDigBio data](#seeding-mongo-with-a-sample-of-idigbio-data)
    - [Seeding Mongo with a sample of GBIF data](#seeding-mongo-with-a-sample-of-gbif-data)
 - [Generate Embeddings](#generate-embeddings)
+
 - [Jupyter Notebooks](#jupyter-notebooks)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
 - [Accessing the Postgres Database](#accessing-the-postgres-database)
@@ -110,6 +111,36 @@ Once we've imported raw-form data into Mongo, we'll want to generate vector embe
 The process is very similar to importing data into Mongo.  Again, if you've just started up the dev container, make sure to open a new terminal tab (assuming you're using VSCode) so that conda will init.
 
 `$ bin/ingest_embed`
+- From the workbench of Redis Insight, pass a simple search string to the `gbif` queue:
+   - `LPUSH embedder "{}"`
+
+## Running and tagging experiments
+
+When generating embeddings, you have the option to tag rows in Postgres with an arbitrary string of text.  This is useful for running experiments and comparing results.  The string will be stored in the Postgres database and can be used to identify the embedding later.
+
+### Example
+`$ bin/ingest_embed --embed_version "thomas_experiment_22" --pretrained "ViT-B-32" --model "laion2b_s34b_b79k"`
+- From the workbench of Redis Insight, pass a simple search string to the `embedder` queue:
+   - `LPUSH embedder "{}"`
+
+From the API, you can limit results to a specific "embed_version" tag:
+```curl
+curl -X 'POST' \
+  'http://localhost:8080/api/search?limit=30&embed_version=thomas_experiment_22' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'search_param=butterfly'
+
+{
+  "search_param": "butterfly",
+  "filename": null,
+  "record_count": 100,
+  "records": [. . .],
+  "embed_version": "thomas_experiment_22"
+}
+```
+
+Note this only works for Open CLIP gennerated embeddings at the moment. (TODO: Update search query to select correct embedding model by "embed_version").
 
 ## Accessing the Postgres Database
 

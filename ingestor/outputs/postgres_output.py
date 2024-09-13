@@ -50,6 +50,9 @@ async def index_to_postgres(
         "earliest_age_or_lowest_stage",
         "external_media_uri",
         "embedding",
+        "model",
+        "pretrained",
+        "embed_version",
     ]
 
     values: List[tuple[Any, ...]] = []
@@ -72,12 +75,20 @@ async def index_to_postgres(
     query = f"""
     INSERT INTO {table} ({', '.join(columns)})
     VALUES ({placeholders})
-    ON CONFLICT (media_uuid) DO UPDATE SET {update_set}
+    ON CONFLICT (media_uuid, embed_version) DO UPDATE SET {update_set}
     """
 
     try:
-        async with conn.transaction():
+        # Check if we're already in a transaction
+        in_transaction = conn.is_in_transaction()
+        
+        if not in_transaction:
+            async with conn.transaction():
+                await conn.executemany(query, values)
+        else:
+            # If we're already in a transaction, just execute the query
             await conn.executemany(query, values)
+        
         logger.info(f"Successfully inserted/updated {len(values)} records into {table}")
     except asyncpg.PostgresError as e:
         logger.error(f"Error inserting/updating data into table {table}: {e}")

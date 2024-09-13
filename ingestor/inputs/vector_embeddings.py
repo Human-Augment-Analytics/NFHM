@@ -80,9 +80,9 @@ def input_data_mapper(
         "collection_date": None,
         "location": None,
         "embedding": None,
-        # "model": model_name,
-        # "pretrained": pretrained,
-        # "embed_version": embed_version,
+        "model": model_name,
+        "pretrained": pretrained,
+        "embed_version": embed_version,
         "tensor_embedding": None,
     }
 

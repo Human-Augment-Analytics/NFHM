@@ -24,6 +24,6 @@ class ProcessedSearchRecord(TypedDict):
     location: Optional[str]
     embedding: Optional[str]
     tensor_embedding: Optional[torch.Tensor]
-    # model: str
-    # pretrained: str
-    # embed_version: str
+    model: str
+    pretrained: str
+    embed_version: str
