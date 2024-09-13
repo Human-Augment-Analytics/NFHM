@@ -171,7 +171,10 @@ cython_debug/
 
 # .vscode.direnv/
 .vscode
+# Ignore .DS_Store files in all directories
+.DS_Store
 **/.DS_Store
 
 # Used by OS when we import pgsql file
 __MACOSX/
+

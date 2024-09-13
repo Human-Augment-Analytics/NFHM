@@ -1,20 +1,22 @@
 FROM pgvector/pgvector:pg16
 
-# Copy init script
-COPY ./postgres/init.sh /docker-entrypoint-initdb.d/init.sh
-
-# Install required packages and Flyway
+# Install required packages and Java
 RUN apt-get update && \
     apt-get install -y \
         postgresql-16-pgvector \
         postgis \
         wget \
-        default-jre && \
-    chmod +x /docker-entrypoint-initdb.d/init.sh && \
-    wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.13/flyway-commandline-8.5.13-linux-x64.tar.gz | tar xvz && \
-    ln -s /flyway-8.5.13/flyway /usr/local/bin && \
+        openjdk-17-jre-headless \
+        curl && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Flyway (x64 version)
+ENV FLYWAY_VERSION=9.20.0
+RUN curl -L -o flyway.tar.gz https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${FLYWAY_VERSION}/flyway-commandline-${FLYWAY_VERSION}-linux-x64.tar.gz && \
+    tar -xzf flyway.tar.gz && \
+    rm flyway.tar.gz && \
+    ln -s /flyway-${FLYWAY_VERSION}/flyway /usr/local/bin && \
+    flyway --version
 
 # Set Flyway configuration
 ENV FLYWAY_CONFIG_FILES=/flyway/conf/flyway.conf
@@ -26,13 +28,11 @@ COPY ./postgres/migrations /flyway/sql
 # Set the working directory
 WORKDIR /
 
-COPY ./postgres/run-migrations.sh /usr/local/bin/run-migrations.sh
-RUN chmod +x /usr/local/bin/run-migrations.sh
+# Copy the custom entrypoint script
+COPY ./postgres/custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
+RUN chmod +x /usr/local/bin/custom-entrypoint.sh
 
 # Set the entrypoint
-COPY ./postgres/docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/custom-entrypoint.sh"]
 
 CMD ["postgres"]
-
