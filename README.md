@@ -20,6 +20,8 @@ The Natural Florida History Museum HAAG project.  A ML-backed search engine of e
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
 - [Accessing the Postgres Database](#accessing-the-postgres-database)
 - [Accessing the Mongo Database](#accessing-the-mongo-database)
+- [Database Versioning](#database-versioning)
+- [Running and tagging experiments](#running-and-tagging-experiments)
 - [Accessing Redis](#accessing-redis)
 - [Useful Commands](#useful-commands)
    - [Sharing Data](#sharing-data)
@@ -113,6 +115,10 @@ The process is very similar to importing data into Mongo.  Again, if you've just
 `$ bin/ingest_embed`
 - From the workbench of Redis Insight, pass a simple search string to the `gbif` queue:
    - `LPUSH embedder "{}"`
+
+## Database Versioning.
+
+We use Flyway to version the Postgres DB.  To make a new migration/version, add `.sql` file named per the [Flyway Naming Conventions](https://flywaydb.org/documentation/concepts/migrations#naming-conventions). `V#__DESCRIPTION.SQL` to the `postgres/migrations` directory.  Then rebuild the docker container. 
 
 ## Running and tagging experiments
 
