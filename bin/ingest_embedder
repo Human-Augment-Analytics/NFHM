@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # This script is run as a postCreateCommand from the dev container
 
@@ -15,4 +15,50 @@ export INPUT="inputs.vector_embedder"
 export QUEUE="ingest_queue.RedisQueue"
 export OUTPUT="outputs.index_to_postgres"
 
-python ingestor/ingestor.py
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --model=*)
+      MODEL="${1#*=}"
+      shift
+      ;;
+    --pretrained=*)
+      PRETRAINED="${1#*=}"
+      shift
+      ;;
+    --pg_table_out=*)
+      PG_TABLE_OUT="${1#*=}"
+      shift
+      ;;
+    --embed_version=*)
+      EMBED_VERSION="${1#*=}"
+      shift
+      ;;
+    *)
+      echo "Unknown parameter: $1"
+      exit 1
+      ;;
+  esac
+done
+
+# Construct the input_kwargs and output_kwargs
+ARGS=""
+
+if [ ! -z "$MODEL" ]; then
+  ARGS="$ARGS --input_kwargs model $MODEL"
+fi
+
+if [ ! -z "$PRETRAINED" ]; then
+  ARGS="$ARGS --input_kwargs pretrained $PRETRAINED"
+fi
+
+if [ ! -z "$EMBED_VERSION" ]; then
+  ARGS="$ARGS --input_kwargs embed_version $EMBED_VERSION"
+fi
+
+if [ ! -z "$PG_TABLE_OUT" ]; then
+  ARGS="$ARGS --output_kwargs table $PG_TABLE_OUT"
+fi
+
+# Execute the Python script with the new arguments
+python ingestor/ingestor.py $ARGS

@@ -20,7 +20,7 @@ services:
       - redis
       - postgres
       - mongo
-  
+
   nginx:
     build:
       context: ../frontend
@@ -32,7 +32,6 @@ services:
       - default
     depends_on:
       - backend
-
 
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -46,6 +45,7 @@ services:
       - 8001:8001
 
   postgres:
+    platform: linux/amd64
     build:
       context: ..
       dockerfile: ./postgres/Dockerfile
@@ -54,9 +54,13 @@ services:
       - default
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ../postgres/migrations:/flyway/sql
+      - ../postgres/flyway/conf:/flyway/conf
+
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nfhm
     ports:
       - 5432:5432
 
@@ -86,7 +90,7 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
       ME_CONFIG_BASICAUTH: false
-  
+
   jupyter:
     image: jupyter/datascience-notebook:latest
     restart: unless-stopped
@@ -106,4 +110,3 @@ volumes:
 
 networks:
   frontend:
-  

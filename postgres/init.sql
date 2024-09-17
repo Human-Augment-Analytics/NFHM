@@ -1,3 +1,5 @@
+-- The purpose of this file is to serve as an uptodate DDL of our Postgres DB for reference
+-- If you make any modifications to PG, please update with the latest DDL.
 -- 1. Create the NFHM database
 CREATE DATABASE NFHM;
 

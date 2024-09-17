@@ -40,7 +40,9 @@ class SearchRecord(SQLModel, table=True):
     earliest_age_or_lowest_stage: Optional[str] = Field(default=None, max_length=512)
     external_media_uri: Optional[str] = Field(default=None, max_length=2083)
     embedding: Optional[list[float]] = Field(default=None, sa_column=Column(Vector(512)))
-
+    model: str = Field(default=None, max_length=255)
+    pretrained: str = Field(default=None, max_length=255)
+    embed_version: str = Field(default=None, max_length=512)
 
     @computed_field
     @property

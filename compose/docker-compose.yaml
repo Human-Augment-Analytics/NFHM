@@ -1,3 +1,4 @@
+version: "3"
 services:
   redis:
     image: redis/redis-stack:7.2.0-v10
@@ -13,7 +14,9 @@ services:
 
   postgres:
     image: nfhm/pgvector
-    build: ../postgres
+    build:
+      context: ..
+      dockerfile: ./postgres/Dockerfile
     restart: unless-stopped
     networks:
       - default
@@ -117,7 +120,7 @@ services:
     #           count: 1
     #           capabilities: [gpu]
 
-   backend:
+  backend:
     image: nfhm/backend-api
     build: ../backend
     depends_on:
@@ -139,7 +142,6 @@ services:
     #         - driver: nvidia
     #           count: 1
     #           capabilities: [gpu]
-
 
   nginx:
     image: nfhm/nginx
