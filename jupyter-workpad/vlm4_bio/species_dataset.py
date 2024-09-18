@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 import imageio.v2 as imageio
 import pandas as pd
 import random
-import .utils as utils
+import utils as utils
 
 
 class BaseDataset(Dataset):

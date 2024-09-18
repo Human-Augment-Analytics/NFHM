@@ -73,10 +73,12 @@ print("Arguments Provided: ", args)
 with open(images_list_path, 'r') as file:
     lines = file.readlines()
 images_list = [line.strip() for line in lines]
+# print('this is the images list length', len(images_list))
 
 img_metadata_df = pd.read_csv(img_metadata_path)
 species_list = img_metadata_df['scientificName'].unique().tolist()
 species_list = [sp for sp in species_list if sp==sp]
+# print('this is the species list length', len(species_list))
 
 def get_options(options):
 
@@ -112,12 +114,6 @@ start_idx = chunk_len * args.chunk_id
 end_idx = len(images_list) if args.chunk_id == 9 else (chunk_len * (args.chunk_id+1))
 images_list = images_list[start_idx:end_idx]
 args.num_queries = len(images_list) if args.num_queries == -1 else args.num_queries
-
-species_dataset = SpeciesClassificationDataset(images_list=images_list, 
-                                               image_dir=image_dir, 
-                                               img_metadata_path=img_metadata_path)
-
-args.num_queries = min(len(species_dataset), args.num_queries)
 out_file_name = "{}/classification_{}_{}_num_{}_chunk_{}.jsonl".format(args.result_dir, args.model, args.task_option, args.num_queries, args.chunk_id)
 
 print("writing to ", out_file_name)
@@ -144,8 +140,10 @@ def run_florence(writer, img_metadata_path, species_list, images_list, image_dir
     metadata = pd.read_csv(img_metadata_path)
 
     for i in tqdm(range(0, args.num_queries, batch_size)):
-        batch_species_list = species_list[i:i + batch_size]
+        # print('\ni is now', i, 'of total', args.num_queries, 'bsize', batch_size)
         batch_image_list = images_list[i:i + batch_size]
+        # print('batch species size, batch image size', len(batch_species_list), len(batch_image_list))
+
         # Preprocess inputs in batches
         batch_images = []
         valid_sp = []
@@ -159,18 +157,20 @@ def run_florence(writer, img_metadata_path, species_list, images_list, image_dir
                 pil_image = Image.open(path_img)
                 batch_images.append(pil_image)
                 valid_sp.append(get_species(img_name, metadata))
+                
                 image_names.append(path_img)
             except Exception as e: 
                 print(f"Error loading image: {path_img}, Except: {e}")
-                print(f"Current j is ")
+                print(f"Current j is {j}")
                 break
 
+        # print('batch species list first', batch_species_list[0], 'first valid sp', valid_sp[0])
         if len(batch_images) != batch_size or len(valid_sp) == 0 or len(batch_images) == 0:
             print("Skipping batch due to missing or invalid images.")
             continue  # Skip empty batches
 
         try:
-            inputs = processor(text=batch_species_list, images=batch_images, return_tensors="pt", padding=True, truncation=True).to(device)
+            inputs = processor(text=valid_sp, images=batch_images, return_tensors="pt", padding=True, truncation=True).to(device)
         except Exception as e: 
             print(f"There's an exception on batch {i} with setting up processor: {e}") 
             continue
@@ -190,7 +190,6 @@ def run_florence(writer, img_metadata_path, species_list, images_list, image_dir
 
         # Process each output in the batch
         for j, generated_text in enumerate(generated_texts):
-            print('processing output')
             target_sp = valid_sp[j]
 
             if target_sp != target_sp:  # Check for NaN or invalid target
