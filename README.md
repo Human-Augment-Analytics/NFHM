@@ -29,7 +29,7 @@ The Natural Florida History Museum HAAG project. A ML-backed search engine of ec
 
 Docker is a prerequisite.
 
-1. Download project: `git clone git@github.com:Human-Augment-Analytics/NFHM.git NFHM`
+1. Download project: `git clone git@github.com:BioCosmos-AI/BioCosmos.git biocosmos`
 
 ### Super Quick Start
 
