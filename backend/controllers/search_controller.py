@@ -34,12 +34,16 @@ class RecordPayload(BaseModel):
     source: str = "iDigBio"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    model: str
+    pretrained: str
+    embed_version: str
 
 class SearchResponse(BaseModel):
     search_param: Optional[str] = None
     filename: Optional[str] = None
     record_count: int
     records: List[RecordPayload]
+    embed_version: str
 
 async def get_session(request: Request) -> AsyncGenerator[AsyncSession, None]:
     engine: AsyncEngine = request.app.state.db_engine
@@ -52,6 +56,7 @@ async def search(
     search_param: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     limit: int = Query(30, ge=1, le=100),
+    embed_version: str = Query("default", max_length=512),
     session: AsyncSession = Depends(get_session)
 ) -> SearchResponse:
     try:
@@ -60,7 +65,9 @@ async def search(
 
         search_vector = await process_input(request, search_param, image)
 
-        query = select(SearchRecord).order_by(
+        query = select(SearchRecord).where(
+            SearchRecord.embed_version == embed_version
+        ).order_by(
             func.l2_distance(
                 SearchRecord.embedding,
                 cast(search_vector, Vector)
@@ -76,7 +83,8 @@ async def search(
             search_param=search_param,
             filename=image.filename if image else None,
             record_count=len(payload),
-            records=payload
+            records=payload,
+            embed_version=embed_version
         )
     except HTTPException:
         raise
@@ -115,5 +123,8 @@ def create_record_payload(record: SearchRecord) -> RecordPayload:
         specimen_id=record.specimen_uuid,
         recorded_by=record.recorded_by,
         collection_date=record.collection_date,
+        model=record.model,
+        pretrained=record.pretrained,
+        embed_version=record.embed_version,
         **record.to_lat_long
     )

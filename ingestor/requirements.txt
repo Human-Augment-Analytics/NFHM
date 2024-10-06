@@ -51,3 +51,4 @@ open_clip_torch
 pandas
 aiohttp
 asyncpg-stubs
+argparse

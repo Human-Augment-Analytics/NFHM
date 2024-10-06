@@ -1,6 +1,8 @@
 import traceback
 import numpy as np
 from numpy.typing import NDArray
+from aiohttp import ClientSession, ClientTimeout
+from aiohttp.client_exceptions import ServerDisconnectedError
 import aiohttp
 import asyncio
 import json
@@ -18,6 +20,10 @@ logging.getLogger("PIL.TiffImagePlugin").setLevel(logging.INFO)
 logging.getLogger("pymongo.command").setLevel(logging.INFO)
 logging.getLogger("pymongo.serverSelection").setLevel(logging.INFO)
 
+DEFAULT_OPEN_CLIP_MODEL = "ViT-B-32"
+DEFAULT_OPEN_CLIP_PRETRAIN_DATA = "laion2b_s34b_b79k"
+DEFAULT_EMBED_VERSION = "default"
+
 model = None
 preprocess = None
 tokenizer = None
@@ -28,22 +34,23 @@ device = (
 logger.info(f"Using device: {device}")
 
 
-async def load_model():
+async def load_model(model_name: str = DEFAULT_OPEN_CLIP_MODEL, pretrained: str = DEFAULT_OPEN_CLIP_PRETRAIN_DATA):
     global model, preprocess, tokenizer
     if model is None:
         model, _, preprocess = open_clip.create_model_and_transforms(
-            "ViT-B-32", pretrained="laion2b_s34b_b79k", device=device
+            model_name, pretrained=pretrained, device=device
         )
         model.to(device)
         model.eval()
-        tokenizer = open_clip.get_tokenizer("ViT-B-32")
-        logger.info("Model loaded")
+        tokenizer = open_clip.get_tokenizer(model_name)
+        logger.info(f"Model loaded: {model_name}, pretrained: {pretrained}")
     else:
         logger.info("Model already loaded")
 
 
+
 def input_data_mapper(
-    media: Dict[str, Any], line: Dict[str, Any]
+    media: Dict[str, Any], line: Dict[str, Any], model_name: str, pretrained: str, embed_version: str = DEFAULT_EMBED_VERSION
 ) -> ProcessedSearchRecord:
     record: ProcessedSearchRecord = {
         "specimen_uuid": line.get("uuid", ""),
@@ -73,6 +80,9 @@ def input_data_mapper(
         "collection_date": None,
         "location": None,
         "embedding": None,
+        "model": model_name,
+        "pretrained": pretrained,
+        "embed_version": embed_version,
         "tensor_embedding": None,
     }
 
@@ -94,7 +104,7 @@ def input_data_mapper(
 
 
 async def extract_data(
-    collection: Any, page_size: int, page_offset: int
+    collection: Any, page_size: int, page_offset: int, model_name: str, pretrained: str, embed_version: str
 ) -> List[ProcessedSearchRecord]:
     projection = {
         "uuid": 1,
@@ -129,28 +139,67 @@ async def extract_data(
 
     documents = await cursor.to_list(length=page_size)
     return [
-        input_data_mapper(media, document)
+        input_data_mapper(media, document, model_name, pretrained, embed_version)
         for document in documents
         for media in document["media"]
     ]
 
 
 async def download_image(
-    session: aiohttp.ClientSession, image_location: str
+    session: aiohttp.ClientSession, image_location: str, timeout: int = 30
 ) -> Optional[Image.Image]:
     try:
-        async with session.get(image_location, allow_redirects=True) as response:
+        # Set a timeout for the request
+        timeout_obj = ClientTimeout(total=timeout)
+        
+        async with session.get(image_location, allow_redirects=True, timeout=timeout_obj) as response:
             if response.status < 400:
                 content = await response.read()
-                return Image.open(BytesIO(content))
+                try:
+                    return Image.open(BytesIO(content))
+                except IOError as io_err:
+                    logger.error(f"Error opening image from {image_location}: {io_err}")
+                    return None
             else:
                 logger.error(
-                    f"Failed to download image from {image_location}. Status code: {response.status}"
+                    f"Failed to download image from {image_location}. Status code: {response.status}, "
+                    f"Reason: {response.reason}, Headers: {response.headers}"
                 )
                 return None
-    except Exception as e:
-        logger.error(f"Error downloading image from {image_location}: {e}")
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout error downloading image from {image_location}")
         return None
+    except aiohttp.ClientError as client_err:
+        logger.error(
+            f"Client error downloading image from {image_location}: {client_err}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error downloading image from {image_location}: {e}", exc_info=True)
+        return None
+
+async def download_with_exponential_backoff(
+    session: ClientSession, 
+    url: str, 
+    max_retries: int = 5, 
+    base_delay: float = 1.0, 
+    max_delay: float = 60.0
+) -> Optional[Image.Image]:
+    for attempt in range(max_retries):
+        try:
+            return await download_image(session, url)
+        except ServerDisconnectedError as e:
+            if attempt == max_retries - 1:
+                logger.error(f"Max retries reached for {url}: {e}")
+                return None
+            
+            # Calculate delay with exponential backoff and jitter
+            delay = min(base_delay * (2 ** attempt) + random.uniform(0, 1), max_delay)
+            
+            logger.warning(f"Server disconnected for {url}, retrying in {delay:.2f} seconds... (Attempt {attempt + 1}/{max_retries})")
+            await asyncio.sleep(delay)
+    
+    logger.error(f"Failed to download image from {url} after {max_retries} attempts")
+    return None
 
 
 async def process_image(
@@ -158,7 +207,7 @@ async def process_image(
 ) -> ProcessedSearchRecord:
     image_location = record["external_media_uri"]
     if image_location:
-        img = await download_image(session, image_location)
+        img = await download_with_exponential_backoff(session, image_location)
         if img is not None:
             image = preprocess(img).unsqueeze(0).to(device)
             with torch.no_grad():
@@ -182,15 +231,25 @@ async def vector_embedder(
         queue = opts["queue"]
         page_size = params.get("page_size", 100)
         page_offset = params.get("page_offset", 0)
+        cv_model =  params.get('model') or opts.get('model', DEFAULT_OPEN_CLIP_MODEL)
+        pretrained = params.get('pretrained') or opts.get('pretrained', DEFAULT_OPEN_CLIP_PRETRAIN_DATA)
+        embed_version = params.get('embed_version') or opts.get('embed_version', DEFAULT_EMBED_VERSION)
 
-        await load_model()
+        await load_model(model_name=cv_model, pretrained=pretrained)
 
-        mongo_records = await extract_data(collection, page_size, page_offset)
+        mongo_records = await extract_data(collection, page_size, page_offset, cv_model, pretrained, embed_version)
 
         if len(mongo_records) >= page_size:
-            next_job = {"page_size": page_size, "page_offset": page_offset + 1}
+            next_job = {
+                "page_size": page_size, 
+                "page_offset": page_offset + 1,
+                "model": cv_model,
+                "pretrained": pretrained,
+                "embed_version": embed_version
+            }
             logger.info(f"Enqueuing next job with offset {page_offset + 1}")
             await queue.enqueue("embedder", json.dumps(next_job))
+
 
         batch_size = 10
         results: List[ProcessedSearchRecord] = []
