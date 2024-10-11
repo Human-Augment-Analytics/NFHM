@@ -114,10 +114,9 @@ The process is very similar to importing data into Mongo. Again, if you've just 
 
 `$ bin/ingest_embedder`
 
-`$ bin/ingest_embed`
-
 As this ingestor is running, it is waiting a signal from the Redis queue to begin the embedding process. This will work very similarly to the `gbif` and `idigbio` queues above:
 From the workbench of Redis Insight, pass a simple search string to the `embedder` queue:
+
 `LPUSH embedder '{}'`
 
 ## Accessing the Postgres Database

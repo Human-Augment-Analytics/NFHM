@@ -4,7 +4,7 @@ FROM pgvector/pgvector:pg16
 RUN apt-get update && \
     apt-get install -y \
         postgresql-16-pgvector \
-        postgis \
+        postgresql-16-postgis-3 \
         wget \
         openjdk-17-jre-headless \
         curl && \
